@@ -1,21 +1,29 @@
 import os
 import logging
+from datetime import datetime
 
-from dotenv import load_dotenv
+from .utils import (
+    running_on_lambda, create_s3_client, get_search_queries, save_parquet_to_s3,
+    get_date_str, setup_logging
+)
+from .extract import get_all_repos_data
 
-from utils import running_on_lambda, create_s3_client, get_search_queries
-
-
-logging.basicConfig(level="INFO", format="%(levelname)s - %(name)s - %(message)s")
 
 if not running_on_lambda():
+    from dotenv import load_dotenv
+
     load_dotenv()
 
 
+LOGGING_LEVEL = os.getenv("LOGGING_LEVEL", "INFO")
 AWS_PROFILE_NAME = os.getenv("AWS_PROFILE_NAME")
 AWS_REGION_NAME = os.getenv("AWS_REGION_NAME")
 SEARCH_QUERIES_BUCKET = os.getenv("SEARCH_QUERIES_BUCKET")
 SEARCH_QUERIES_PATH = os.getenv("SEARCH_QUERIES_PATH")
+DATA_OUTPUT_BUCKET = os.getenv("DATA_OUTPUT_BUCKET")
+DATA_OUTPUT_PATH = os.getenv("DATA_OUTPUT_PATH")
+
+setup_logging(LOGGING_LEVEL)
 
 
 def lambda_handler(event, context):
@@ -24,6 +32,10 @@ def lambda_handler(event, context):
         s3_client=s3_client, bucket=SEARCH_QUERIES_BUCKET, path=SEARCH_QUERIES_PATH
     )
     logging.info(f"Search queries: {search_queries}")
+    data = get_all_repos_data(topics=search_queries)
+    
+    output_path = f"{DATA_OUTPUT_PATH}/{get_date_str(datetime.now())}/repos.parquet"
+    save_parquet_to_s3(s3_client=s3_client, data=data, bucket=DATA_OUTPUT_BUCKET, path=output_path)
 
 
 if __name__ == "__main__":
