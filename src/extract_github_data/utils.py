@@ -40,8 +40,13 @@ def save_parquet_to_s3(s3_client, data: list[dict], bucket: str, path: str):
     pq.write_table(table, buffer, compression="snappy")
     buffer.seek(0)
 
-    logging.debug(f"Uploading data to {path}.")
+    logging.debug(f"Uploading paruqet data to {path}.")
     s3_client.upload_fileobj(Bucket=bucket, Key=path, Fileobj=buffer)
+
+
+def save_json_to_s3(s3_client, data: list[dict], bucket: str, path: str):
+    logging.debug(f"Uploading JSON data to {path}.")
+    s3_client.put_object(Bucket=bucket, Key=path, Body=json.dumps(data))
 
 
 def setup_logging(logging_level) -> None:
