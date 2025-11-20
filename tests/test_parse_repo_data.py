@@ -1,4 +1,4 @@
-from extract_github_data.extract import parse_repo_data
+from extract_github_data.extract import parse_repo_data, get_total_counts
 
 
 def test_parse_repo_data_basic():
@@ -47,3 +47,16 @@ def test_parse_repo_data_missing_license():
 
     parsed = parse_repo_data(input_data)
     assert parsed[0]["license"] == ""
+
+
+def test_counts_parsing():
+    input_data = {
+        "total_count": 12321,
+        "incomplete_results": False,
+        "items": [
+            {"id": 3, "name": "test-repo"},
+            {"id": 3, "name": "test-repo-1"}
+        ]
+    }
+    repo_counts = get_total_counts({}, "test-topic", input_data)
+    assert repo_counts == {"test-topic": 12321}

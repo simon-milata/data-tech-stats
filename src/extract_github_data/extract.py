@@ -65,6 +65,11 @@ def get_languages(languages_url: str) -> dict[str, int]:
 
     return response.json()
 
+def get_total_counts(repo_counts, topic, repos_page_data) -> dict[str, int]:
+    if topic not in repo_counts:
+        repo_counts[topic] = repos_page_data["total_count"]
+    return repo_counts
+
 
 def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]:
     language_data = []
@@ -73,8 +78,7 @@ def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]
     for topic in topics:
         for page in range(1, 1+1):
             repos_page_data = get_repos_from_page(topic, page)
-            if topic not in repo_counts:
-                repo_counts["topic"] = repos_page_data["total_count"]
+            repo_counts = get_total_counts(repo_counts, topic, repos_page_data)
 
             parsed_page_data = parse_repo_data(repos_page_data["items"])
             parsed_data.extend(parsed_page_data)
