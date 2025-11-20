@@ -3,10 +3,9 @@ import time
 import random
 import logging
 
-import requests
 from urllib import parse
 
-from .utils import running_on_lambda
+from .utils import running_on_lambda, make_get_request
 
 if not running_on_lambda():
     from dotenv import load_dotenv
@@ -50,25 +49,25 @@ def parse_repo_data(data: list[dict]) -> list[dict]:
     return parsed_data
 
 
-def get_repos_from_page(topic: str, page: int, retries: int = 0, max_retries: int = 5) -> dict:
+def get_repos_from_page(topic: str, page: int) -> dict:
     params = f"repositories?q=topic:{topic}&page={page}&sort=stars"
     url = parse.urljoin(base=GITHUB_SEARCH_API_URL, url=params)
     logging.debug(f"Getting data from '{url}'.")
     
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        if retries < max_retries:
-            logging.warning(f"Response code for '{url}': {response.status_code}! Error message: '{response.text}'. Retrying.")
-            time.sleep(retries)
-            return get_repos_from_page(topic=topic, page=page, retries=retries + 1)
-        else:
-            raise Exception("Max retries reached!")
+    response = make_get_request(url=url, headers=headers)
         
-    logging.debug(f"Succesfully fetched data from '{url}'.")
     return response.json()
 
 
-def get_all_repos_data(topics: list[str]):
+def get_languages(languages_url: str) -> dict[str, int]:
+    logging.debug(f"Fetching languages from '{languages_url}'.")
+    response = make_get_request(url=languages_url, headers=headers)
+
+    return response.json()
+
+
+def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]:
+    language_data = []
     repo_counts = {}
     parsed_data = []
     for topic in topics:
@@ -76,8 +75,22 @@ def get_all_repos_data(topics: list[str]):
             repos_page_data = get_repos_from_page(topic, page)
             if topic not in repo_counts:
                 repo_counts["topic"] = repos_page_data["total_count"]
+
             parsed_page_data = parse_repo_data(repos_page_data["items"])
             parsed_data.extend(parsed_page_data)
+
+            if not page == 1:
+                # Only add a delay when not getting languages
+                time.sleep(random.uniform(1, 3))
+                continue
+
+            # Only get language data from the first page to avoid many API calls
+            for repo in parsed_page_data:
+                repo_languages = get_languages(repo["languages_url"])
+                language_data.append({
+                    "repo_id": repo["id"], 
+                    "repo_name": repo["name"], 
+                    "languages": repo_languages
+                })
             
-            time.sleep(random.uniform(2, 3))
-    return parsed_data, repo_counts
+    return parsed_data, repo_counts, language_data

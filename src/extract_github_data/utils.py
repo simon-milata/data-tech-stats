@@ -3,6 +3,8 @@ import json
 from io import BytesIO
 from datetime import datetime
 import logging
+import requests
+import time
 
 import boto3
 import pyarrow as pa
@@ -59,3 +61,29 @@ def setup_logging(logging_level) -> None:
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("botocore").setLevel(logging.WARNING)
     logging.getLogger("s3transfer").setLevel(logging.WARNING)
+
+
+def make_get_request(url: str, headers: dict, retries: int = 0, max_retries: int = 5) -> requests.Response:
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        if retries < max_retries:
+            logging.warning(f"Response code for '{url}': {response.status_code}! Error message: '{response.text}'. Retrying.")
+            time.sleep(retries)
+            return make_get_request(url=url, headers=headers, retries=retries + 1)
+        else:
+            raise Exception(f"Max for '{url}' retries reached!")
+    
+    logging.debug(f"Succesfully fetched data from '{url}'.")
+    return response
+
+
+def transform_lang_list_long(language_data: dict) -> list[dict]:
+    rows = []
+    for lang, bytes_count in language_data["languages"].items():
+        rows.append({
+            "repo_id": language_data["repo_id"],
+            "repo_name": language_data["repo_name"],
+            "language": lang,
+            "bytes": bytes_count
+        })
+    return rows
