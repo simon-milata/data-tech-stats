@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DataTechStats Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <h1>DataTechStats</h1>
+            <p class="subtitle">Insights into popular data-engineering repositories</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="dashboard">
+            <div class="graph-card">
+                <div class="card-top">
+                    <h2>Repo Counts</h2>
+                    <div class="range-switcher" role="tablist" aria-label="Range selector">
+                        <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
+                        <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
+                    </div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="repoCountsChart" aria-label="Repository counts over time" role="img"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
