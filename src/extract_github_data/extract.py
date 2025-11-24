@@ -14,6 +14,7 @@ if not running_on_lambda():
     
 
 GITHUB_API_TOKEN = os.getenv("GITHUB_API_TOKEN")
+RESULTS_PER_PAGE = os.getenv("RESULTS_PER_PAGE", 1)
 
 GITHUB_SEARCH_API_URL = "https://api.github.com/search/"
 
@@ -50,7 +51,7 @@ def parse_repo_data(data: list[dict]) -> list[dict]:
 
 
 def get_repos_from_page(topic: str, page: int) -> dict:
-    params = f"repositories?q=topic:{topic}&page={page}&sort=stars"
+    params = f"repositories?q=topic:{topic}&page={page}&sort=stars&per_page={RESULTS_PER_PAGE}"
     url = parse.urljoin(base=GITHUB_SEARCH_API_URL, url=params)
     logging.debug(f"Getting data from '{url}'.")
     
