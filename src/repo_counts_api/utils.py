@@ -18,8 +18,29 @@ def create_s3_client(profile: str = "default", region: str = None):
     return session.client("s3")
 
 
-def get_all_dates(s3_client, bucket: str, prefix: str):
-    objects = s3_client.list_objects(
+def get_all_objects(s3_client, bucket: str, prefix: str):
+    objects = s3_client.list_objects_v2(
         Bucket=bucket,
         Prefix=prefix
+    )["Contents"][1:]
+    return objects
+
+
+def get_object_keys(objects: list[dict]) -> list:
+    return [obj["Key"] for obj in objects]
+
+
+def filter_object_keys(keys: list[str], suffix: str) -> list[str]:
+    return [key for key in keys if key.endswith(suffix)]
+
+
+def get_object(s3_client, bucket: str, key: str):
+    obj = s3_client.get_object(
+        Bucket=bucket,
+        Key=key
     )
+    return obj
+
+
+def get_date_from_key(key: str) -> str:
+    return "-".join(key.split("/")[1:-1:])
