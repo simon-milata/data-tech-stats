@@ -9,8 +9,8 @@ class AWSConfig(BaseSettings):
     region: str = Field(default="eu-central-1", validation_alias="AWS_REGION_NAME")
     github_data_bucket: str = Field(validation_alias="GITHUB_DATA_BUCKET")
     github_data_prefix: str = Field(validation_alias="GITHUB_DATA_PREFIX")
-    aggregated_bucket: str = Field(validation_alias="AGGREGATED_DATA_OUTPUT_BUCKET")
-    repo_counts_path: str = Field(validation_alias="REPO_COUNTS_AGGREGATED_DATA_OUTPUT_PATH")
+    data_output_bucket: str = Field(validation_alias="AGGREGATED_DATA_OUTPUT_BUCKET")
+    data_output_path: str = Field(validation_alias="AGGREGATED_DATA_OUTPUT_PATH")
 
     model_config = {
         "env_file": str(Path(__file__).parent / ".env"),
