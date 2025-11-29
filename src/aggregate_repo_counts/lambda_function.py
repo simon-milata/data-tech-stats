@@ -3,7 +3,7 @@ import json
 from .config import AWSConfig
 from .utils import (
     create_s3_client, running_on_lambda, get_all_objects, get_object_keys, filter_object_keys, 
-    group_keys_by_week, pick_latest_key_per_week, get_object, save_aggregated_data
+    group_keys_by_period, pick_latest_key_per_period, get_object, save_aggregated_data
 )
 
 running_on_lambda = running_on_lambda()
@@ -19,14 +19,14 @@ def lambda_handler(event, context):
     keys = get_object_keys(objects)
     repo_count_keys = filter_object_keys(keys, "repo_counts.json")
 
-    if interval == "weekly":
-        grouped_keys = group_keys_by_week(repo_count_keys)
-        weekly_keys = pick_latest_key_per_week(grouped_keys)
+    period = interval.replace("ly", "")
+    grouped_keys = group_keys_by_period(repo_count_keys, period)
+    top_keys = pick_latest_key_per_period(grouped_keys)
 
-        for key, value in weekly_keys.items():
-            obj = get_object(s3_client, aws_config.github_data_bucket, value)
-            content = json.load(obj["Body"])
-            data.append({"date": key, "counts": content})
+    for key, value in top_keys.items():
+        obj = get_object(s3_client, aws_config.github_data_bucket, value)
+        content = json.load(obj["Body"])
+        data.append({"date": key, "counts": content})
 
     output_path = f"{aws_config.data_output_path}/{interval}.json"
     save_aggregated_data(s3_client, aws_config.data_output_bucket, output_path, data)
@@ -34,6 +34,6 @@ def lambda_handler(event, context):
 
 if __name__ == "__main__":
     payload = {
-        "interval": "weekly"
+        "interval": "monthly"
     }
     lambda_handler(payload, None)

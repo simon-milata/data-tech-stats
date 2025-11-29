@@ -2,6 +2,7 @@ import os
 from datetime import datetime, date
 from collections import defaultdict
 import json
+from typing import Literal
 
 import boto3
 
@@ -50,22 +51,26 @@ def get_date_from_key(key: str) -> date:
     return datetime(int(year), int(month), int(day)).date()
 
 
-def group_keys_by_week(keys: list[str]) -> dict[str, list[str]]:
+def group_keys_by_period(keys: list[str], period: Literal["week", "month"]) -> dict[str, list[str]]:
+    """Groups S3 keys by period (month / week)"""
     grouped_dates = defaultdict(list)
     for key in keys:
         date = get_date_from_key(key)
-        year_week = f"{date.year}-W{date.isocalendar().week:02}"
-        grouped_dates[year_week].append(key)
-
+        if period == "week":
+            year_period = f"{date.year}-W{date.isocalendar().week:02}"
+        elif period == "month":
+            year_period = f"{date.year}-{date.month:02}"
+        grouped_dates[year_period].append(key)
     return grouped_dates
 
 
-def pick_latest_key_per_week(grouped_keys: dict[str, list[str]]) -> dict[str, str]:
-    latest_key_per_week = {}
+def pick_latest_key_per_period(grouped_keys: dict[str, list[str]]) -> dict[str, str]:
+    """Picks keys with the latest date for each group"""
+    latest_key_per_period = {}
     for key, value in grouped_keys.items():
         latest_key = max(value, key=get_date_from_key)
-        latest_key_per_week[key] = latest_key
-    return latest_key_per_week
+        latest_key_per_period[key] = latest_key
+    return latest_key_per_period
 
 
 def save_aggregated_data(s3_client, bucket: str, path: str, body: dict[str, str]):
