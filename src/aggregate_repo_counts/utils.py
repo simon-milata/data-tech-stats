@@ -73,7 +73,7 @@ def pick_latest_key_per_period(grouped_keys: dict[str, list[str]]) -> dict[str, 
     return latest_key_per_period
 
 
-def save_aggregated_data(s3_client, bucket: str, path: str, body: dict[str, str]):
+def save_data_to_s3(s3_client, bucket: str, path: str, body: dict[str, str]):
     s3_client.put_object(
         Bucket=bucket,
         Key=path,
