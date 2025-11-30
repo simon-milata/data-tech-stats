@@ -47,21 +47,3 @@ def get_object(s3_client, bucket: str, key: str):
 def get_date_from_key(key: str) -> date:
     year, month, day = key.split("/")[1:-1:]
     return datetime(int(year), int(month), int(day)).date()
-
-
-def group_keys_by_week(keys: list[str]) -> dict[str, list[str]]:
-    grouped_dates = defaultdict(list)
-    for key in keys:
-        date = get_date_from_key(key)
-        year_week = f"{date.year}-W{date.isocalendar().week:02}"
-        grouped_dates[year_week].append(key)
-
-    return grouped_dates
-
-
-def pick_latest_key_per_week(grouped_keys: dict[str, list[str]]) -> dict[str, str]:
-    latest_key_per_week = {}
-    for key, value in grouped_keys.items():
-        latest_key = max(value, key=get_date_from_key)
-        latest_key_per_week[key] = latest_key
-    return latest_key_per_week
