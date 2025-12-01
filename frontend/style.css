@@ -61,7 +61,10 @@ body {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 12px;
+    gap: 12px;
 }
+
+.card-top .controls { display:flex; gap:12px; align-items:center; }
 
 .graph-card h2 {
     margin: 0;
@@ -75,7 +78,7 @@ body {
 
 .range-switcher {
     display: inline-flex;
-    background: rgba(243,244,246,0.6);
+    background: rgba(15,23,42,0.03); /* very light neutral tint */
     border-radius: 999px;
     padding: 6px;
 }
@@ -86,17 +89,18 @@ body {
     border-radius: 999px;
     cursor: pointer;
     font-weight: 600;
-    color: #374151;
-    transition: background 0.15s ease, color 0.15s ease;
+    color: var(--muted);
+    transition: background 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
     font-size: 0.95rem;
 }
-.range-btn:hover { background: rgba(255,255,255,0.06); }
+.range-btn:hover { background: rgba(15,23,42,0.04); color: var(--text); }
 .range-btn.active {
-    background: linear-gradient(90deg,var(--accent-2),var(--accent-1));
-    color: white;
-    box-shadow: 0 8px 22px rgba(6,182,196,0.12);
+    background: rgba(15,23,42,0.08);
+    color: var(--text);
+    box-shadow: 0 6px 18px rgba(15,23,42,0.05);
+    border: 1px solid rgba(15,23,42,0.04);
 }
-.range-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(6,182,196,0.12);} 
+.range-btn:focus { outline: none; box-shadow: 0 0 0 3px rgba(15,23,42,0.06);} 
 
 .chart-wrap {
     height: 360px;
@@ -143,6 +147,11 @@ body {
     font-weight: 700;
     font-size: 1rem;
 }
+.chart-tooltip .values { margin-top:6px; display:flex; flex-direction:column; gap:6px; }
+.chart-tooltip .tt-line { display:flex; align-items:center; gap:8px; }
+.chart-tooltip .tt-dot { width:10px; height:10px; border-radius:999px; display:inline-block; flex:0 0 10px; }
+.chart-tooltip .tt-name { color:#374151; font-weight:600; flex:1; }
+.chart-tooltip .tt-val { color:#0f172a; font-weight:700; }
 
 .muted { color: var(--muted); font-size: 0.95rem; }
 
@@ -153,3 +162,40 @@ body {
 
 /* keep existing canvas forcing rules if any */
 .graph-card canvas { width: 100% !important; height: 100% !important; }
+
+.topic-filters { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 10px 0; }
+.topic-chip { background: rgba(243,244,246,0.6); border: 0; padding:6px 10px; border-radius:999px; cursor:pointer; font-weight:600; color: #374151; }
+.topic-chip.active { background: linear-gradient(90deg, var(--accent-2), var(--accent-1)); color: #fff; box-shadow: 0 8px 20px rgba(139,92,246,0.12); }
+
+.chart-wrap { height: 420px; }
+
+/* slightly more room for legend */
+.chartjs-render-monitor + .chart-legend, .chart-legend { margin-top: 10px; }
+
+/* legend chips compact */
+.chart-legend { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.legend-chip { background: rgba(243,244,246,0.8); border:0; padding:6px 8px; border-radius:8px; cursor:pointer; font-weight:600; color:#374151; display:inline-flex; align-items:center; gap:8px; font-size:0.92rem; }
+.legend-chip.active { box-shadow: 0 8px 20px rgba(15,23,42,0.06); }
+.legend-chip:not(.active) { opacity:0.5; }
+
+/* remove dropdown rules */
+.filters-dropdown, .filters-toggle, .filters-menu { display:none !important; }
+
+.repo-summary { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+.summary-item { background: rgba(243,244,246,0.6); padding:8px 12px; border-radius:10px; font-weight:600; color:#0f172a; display:flex; gap:8px; align-items:center; }
+.summary-item .val { color: #111827; font-weight:700; margin-left:6px; }
+.summary-item .delta { margin-left:8px; color:#6b7280; font-weight:600; }
+
+/* positive/negative colors */
+.summary-item.positive .delta { color: #059669; }
+.summary-item.negative .delta { color: #ef4444; }
+
+/* style tooltip to match site */
+.chart-tooltip { position:absolute; pointer-events:none; transform:translate(-50%,-120%); min-width:120px; background: linear-gradient(180deg,#ffffff,#fbfeff); border-radius:10px; padding:8px 12px; box-shadow:0 10px 30px rgba(15,23,42,0.08); border:1px solid rgba(15,23,42,0.06); z-index:40; }
+.chart-tooltip .label{ font-weight:700; color:#0f172a; }
+.chart-tooltip .value{ margin-top:6px; color:#059669; font-weight:700; }
+.chart-tooltip .values { margin-top:6px; display:flex; flex-direction:column; gap:6px; }
+.chart-tooltip .tt-line { display:flex; align-items:center; gap:8px; }
+.chart-tooltip .tt-dot { width:10px; height:10px; border-radius:999px; display:inline-block; flex:0 0 10px; }
+.chart-tooltip .tt-name { color:#374151; font-weight:600; flex:1; }
+.chart-tooltip .tt-val { color:#0f172a; font-weight:700; }

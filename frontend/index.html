@@ -12,7 +12,7 @@
     <header class="site-header">
         <div class="container">
             <h1>DataTechStats</h1>
-            <p class="subtitle">Insights into popular data-engineering repositories</p>
+            <p class="subtitle">Insights into popular data repositories</p>
         </div>
     </header>
 
@@ -20,15 +20,19 @@
         <div class="dashboard">
             <div class="graph-card">
                 <div class="card-top">
-                    <h2>Repo Counts</h2>
-                    <div class="range-switcher" role="tablist" aria-label="Range selector">
-                        <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
-                        <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
+                    <h2>Total Repositories by Topic</h2>
+                    <div class="controls">
+                        <div class="range-switcher" role="tablist" aria-label="Range selector">
+                            <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
+                            <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
+                        </div>
+                        <!-- legend will appear below the chart as the single control -->
                     </div>
                 </div>
                 <div class="chart-wrap">
                     <canvas id="repoCountsChart" aria-label="Repository counts over time" role="img"></canvas>
                 </div>
+                <div id="repoLegend" class="chart-legend" aria-hidden="false"></div>
             </div>
         </div>
     </main>
