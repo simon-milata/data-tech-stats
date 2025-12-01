@@ -18,7 +18,18 @@ app = FastAPI()
 def get_repo_counts(interval: Literal["weekly", "monthly"]):
     s3_client = create_s3_client(aws_config.profile, aws_config.region)
 
-    data_path = f"{aws_config.repo_counts_path}/{interval}.json"
+    data_path = f"{aws_config.aggregated_data_path}/repo_counts/{interval}.json"
+    obj = get_object(s3_client, aws_config.aggregated_bucket, data_path)
+    content = json.load(obj["Body"])
+
+    return content
+
+
+@app.get("/data-tech-stats/api/primary-languages")
+def get_repo_counts(interval: Literal["weekly", "monthly"]):
+    s3_client = create_s3_client(aws_config.profile, aws_config.region)
+
+    data_path = f"{aws_config.aggregated_data_path}/primary_langs_counts/{interval}.json"
     obj = get_object(s3_client, aws_config.aggregated_bucket, data_path)
     content = json.load(obj["Body"])
 
