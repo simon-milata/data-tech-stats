@@ -20,5 +20,5 @@ def aggregate_repo_counts(s3_client, repo_count_keys, period, aws_config):
 
 
 def save_agg_repo_counts(s3_client, aws_config, interval, data):
-    output_path = f"{aws_config.data_output_path}/{interval}.json"
+    output_path = f"{aws_config.data_output_path}/repo_counts/{interval}.json"
     save_data_to_s3(s3_client, aws_config.data_output_bucket, output_path, data)

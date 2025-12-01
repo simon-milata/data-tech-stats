@@ -3,8 +3,10 @@ from datetime import datetime, date
 from collections import defaultdict
 import json
 from typing import Literal
+from io import BytesIO
 
 import boto3
+import pandas as pd
 
 
 def running_on_lambda() -> bool:
@@ -79,3 +81,9 @@ def save_data_to_s3(s3_client, bucket: str, path: str, body: dict[str, str]):
         Key=path,
         Body=json.dumps(body)
     )
+
+
+def parse_parquet(obj) -> pd.DataFrame:
+    """Reads parquet S3 object and returns table as pandas DataFrame"""
+    body = obj["Body"].read()
+    return pd.read_parquet(BytesIO(body))
