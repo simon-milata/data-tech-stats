@@ -1,5 +1,6 @@
 import { renderRepoCountsChart } from "./charts/repoCountsChart.js";
 import { renderMultiLinesChart } from "./charts/components/multiLinesChart.js";
+import { renderLanguagesCountsChart } from "./charts/languagesCountsChart.js";
 
 const buttons = document.querySelectorAll(".range-btn");
 let currentRange = 'weekly';
@@ -14,11 +15,14 @@ buttons.forEach(btn => {
         renderRepoCountsChart(range);
         // update multi-lines chart as well
         renderMultiLinesChart(null, null, currentRange);
+        // update languages counts chart
+        renderLanguagesCountsChart(currentRange);
     });
 });
 
 // initial render
 renderRepoCountsChart("weekly");
 renderMultiLinesChart(null, null, currentRange);
+renderLanguagesCountsChart(currentRange);
 
 // legend chips are rendered and managed by the chart component itself

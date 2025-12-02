@@ -85,3 +85,105 @@ export async function getRepoCountsByTopic(range = 'weekly') {
         counts: Object.fromEntries(Object.entries(base).map(([k, v]) => [k, Math.round(v * (1 + 0.01 * i))]))
     }));
 }
+
+export async function getLanguagesTimeseries(range = 'weekly') {
+    // try real endpoint first if configured
+    if (API_BASE) {
+        try {
+            const res = await fetch(`${API_BASE}/languages-timeseries?range=${encodeURIComponent(range)}`);
+            if (!res.ok) throw new Error('Network response was not ok');
+            return await res.json();
+        } catch (err) {
+            console.warn('API fetch failed, falling back to mock:', err);
+        }
+    }
+
+    if (range === 'weekly') {
+        return [
+            {
+                date: '2025-W48',
+                counts: {
+                    "Python": 434,
+                    "TypeScript": 115,
+                    "Jupyter Notebook": 112,
+                    "Go": 75,
+                    "JavaScript": 67,
+                    "C++": 62,
+                    "Java": 52,
+                    "Rust": 39,
+                    "C": 22,
+                    "HTML": 22,
+                    "C#": 17,
+                    "PHP": 13,
+                    "Ruby": 10,
+                    "Scala": 8,
+                    "Clojure": 4,
+                    "Shell": 4,
+                    "Elixir": 3,
+                    "Kotlin": 3,
+                    "TSQL": 2,
+                    "MDX": 2,
+                    "TeX": 2,
+                    "CSS": 2,
+                    "R": 2,
+                    "Markdown": 1,
+                    "Makefile": 1,
+                    "Vue": 1,
+                    "Swift": 1,
+                    "Mojo": 1,
+                    "Julia": 1,
+                    "Lua": 1,
+                    "MATLAB": 1,
+                    "Cython": 1,
+                    "Pascal": 1,
+                    "Haskell": 1,
+                    "Objective-C": 1
+                }
+            }
+        ];
+    }
+
+    // Monthly
+    return [
+        {
+            date: '2025-11',
+            counts: {
+                "Python": 434,
+                "TypeScript": 115,
+                "Jupyter Notebook": 112,
+                "Go": 75,
+                "JavaScript": 67,
+                "C++": 62,
+                "Java": 52,
+                "Rust": 39,
+                "C": 22,
+                "HTML": 22,
+                "C#": 17,
+                "PHP": 13,
+                "Ruby": 10,
+                "Scala": 8,
+                "Clojure": 4,
+                "Shell": 4,
+                "Elixir": 3,
+                "Kotlin": 3,
+                "TSQL": 2,
+                "MDX": 2,
+                "TeX": 2,
+                "CSS": 2,
+                "R": 2,
+                "Markdown": 1,
+                "Makefile": 1,
+                "Vue": 1,
+                "Swift": 1,
+                "Mojo": 1,
+                "Julia": 1,
+                "Lua": 1,
+                "MATLAB": 1,
+                "Cython": 1,
+                "Pascal": 1,
+                "Haskell": 1,
+                "Objective-C": 1
+            }
+        }
+    ];
+}
