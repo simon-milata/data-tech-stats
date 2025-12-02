@@ -27,7 +27,7 @@ def get_repo_counts(interval: Literal["weekly", "monthly"]):
 
 
 @router.get("/primary-languages")
-def get_repo_counts(interval: Literal["weekly", "monthly"]):
+def get_primary_languages(interval: Literal["weekly", "monthly"]):
     s3_client = create_s3_client(aws_config.profile, aws_config.region)
 
     data_path = f"{aws_config.aggregated_data_path}/primary_langs_counts/{interval}.json"
