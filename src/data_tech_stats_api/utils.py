@@ -1,8 +1,11 @@
 import os
 from datetime import datetime, date
+from typing import Any, Literal
+from io import BytesIO
 from collections import defaultdict
 
 import boto3
+import pandas as pd
 
 
 def running_on_lambda() -> bool:
@@ -20,7 +23,7 @@ def create_s3_client(profile: str = "default", region: str = None):
     return session.client("s3")
 
 
-def get_all_objects(s3_client, bucket: str, prefix: str):
+def get_objects(s3_client, bucket: str, prefix: str) -> list[dict[str, Any]]:
     objects = s3_client.list_objects_v2(
         Bucket=bucket,
         Prefix=prefix
@@ -47,3 +50,31 @@ def get_object(s3_client, bucket: str, key: str):
 def get_date_from_key(key: str) -> date:
     year, month, day = key.split("/")[1:-1:]
     return datetime(int(year), int(month), int(day)).date()
+
+
+def parse_parquet(obj) -> pd.DataFrame:
+    """Reads parquet S3 object and returns table as pandas DataFrame"""
+    body = obj["Body"].read()
+    return pd.read_parquet(BytesIO(body))
+
+
+def group_keys_by_period(keys: list[str], period: Literal["week", "month"]) -> dict[str, list[str]]:
+    """Groups S3 keys by period (month / week)"""
+    grouped_dates = defaultdict(list)
+    for key in keys:
+        date = get_date_from_key(key)
+        if period == "week":
+            year_period = f"{date.year}-W{date.isocalendar().week:02}"
+        elif period == "month":
+            year_period = f"{date.year}-{date.month:02}"
+        grouped_dates[year_period].append(key)
+    return grouped_dates
+
+
+def pick_latest_key_per_period(grouped_keys: dict[str, list[str]]) -> dict[str, str]:
+    """Picks keys with the latest date for each group"""
+    latest_key_per_period = {}
+    for key, value in grouped_keys.items():
+        latest_key = max(value, key=get_date_from_key)
+        latest_key_per_period[key] = latest_key
+    return latest_key_per_period
