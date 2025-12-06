@@ -12,17 +12,32 @@ buttons.forEach(btn => {
 
         const range = btn.dataset.range;
         currentRange = range;
-        renderRepoCountsChart(range);
-        // update multi-lines chart as well
-        renderMultiLinesChart(null, null, currentRange);
-        // update languages counts chart
-        renderLanguagesCountsChart(currentRange);
+        // render multi-line chart for first card (repo counts by topic)
+        try {
+            renderMultiLinesChart(null, null, currentRange);
+        } catch(e) {
+            console.error('Error rendering multi-lines chart:', e);
+        }
+        // render languages chart for second card
+        try {
+            renderLanguagesCountsChart(currentRange);
+        } catch(e) {
+            console.error('Error rendering languages chart:', e);
+        }
     });
 });
 
 // initial render
-renderRepoCountsChart("weekly");
-renderMultiLinesChart(null, null, currentRange);
-renderLanguagesCountsChart(currentRange);
+try {
+    renderMultiLinesChart(null, null, currentRange);
+} catch(e) {
+    console.error('Error rendering multi-lines chart on load:', e);
+}
+
+try {
+    renderLanguagesCountsChart(currentRange);
+} catch(e) {
+    console.error('Error rendering languages chart on load:', e);
+}
 
 // legend chips are rendered and managed by the chart component itself

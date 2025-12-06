@@ -1,11 +1,134 @@
 import { getLanguagesTimeseries } from "../api.js";
 
 let langChartInstance = null;
+let allLanguagesWithCounts = [];
+let rawLanguageData = {}; // Store raw data by language
+let isInitializing = false; // Prevent updates during initialization
 const colors = [
     '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444', '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
 ];
 
-function toReadableKey(k){ return k.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+// Get currently selected languages from checkboxes
+function getSelectedLanguages(){
+    const checkboxes = document.querySelectorAll('.language-selector-popup input[type="checkbox"]:checked');
+    const selected = Array.from(checkboxes).map(cb => cb.value);
+    if(selected.length > 0) return selected;
+    // Default to top 10
+    return allLanguagesWithCounts.slice(0, 10).map(l => l.lang);
+}
+
+// Render the language selector popup
+function renderSelector(){
+    const container = document.getElementById('languageSelectorContainer');
+    if(!container) return;
+    
+    container.innerHTML = '';
+    const wrapper = document.createElement('div');
+    wrapper.className = 'language-selector-wrapper';
+    
+    // Create toggle button
+    const toggle = document.createElement('button');
+    toggle.className = 'language-selector-toggle';
+    toggle.textContent = 'Select Languages';
+    
+    // Create popup
+    const popup = document.createElement('div');
+    popup.className = 'language-selector-popup';
+    popup.style.display = 'none';
+    
+    const topLanguagesSet = new Set(allLanguagesWithCounts.slice(0, 10).map(l => l.lang));
+    isInitializing = true;
+    
+    allLanguagesWithCounts.forEach(({lang, count}) => {
+        const label = document.createElement('label');
+        label.className = 'language-selector-item';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = lang;
+        checkbox.checked = topLanguagesSet.has(lang);
+        
+        const labelText = document.createElement('span');
+        labelText.className = 'language-selector-label';
+        labelText.innerHTML = `<span class="lang-name">${lang}</span><span class="lang-count">${count}</span>`;
+        
+        label.appendChild(checkbox);
+        label.appendChild(labelText);
+        
+        checkbox.addEventListener('change', () => {
+            if(isInitializing) return;
+            const selected = Array.from(popup.querySelectorAll('input[type="checkbox"]:checked'));
+            if(selected.length > 10){
+                checkbox.checked = false;
+            } else {
+                updateLanguagesChart();
+                updateToggleText(popup);
+            }
+        });
+        
+        popup.appendChild(label);
+    });
+    
+    isInitializing = false;
+    
+    toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
+    });
+    
+    document.addEventListener('click', (e) => {
+        if(!wrapper.contains(e.target)){
+            popup.style.display = 'none';
+        }
+    });
+    
+    wrapper.appendChild(toggle);
+    wrapper.appendChild(popup);
+    container.appendChild(wrapper);
+    
+    updateToggleText(popup);
+}
+
+function updateToggleText(popup){
+    const toggle = popup.parentElement.querySelector('.language-selector-toggle');
+    const count = popup.querySelectorAll('input[type="checkbox"]:checked').length;
+    toggle.textContent = count > 0 ? `Languages (${count})` : 'Select Languages';
+}
+
+// Update chart with selected languages
+function updateLanguagesChart(){
+    if(!langChartInstance) return;
+    
+    const selectedLangs = getSelectedLanguages();
+    
+    // Create new datasets for selected languages
+    const newDatasets = selectedLangs.map((lang) => {
+        const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
+        const color = colors[langIndex % colors.length];
+        const langData = rawLanguageData[lang] || [];
+        
+        return {
+            label: lang,
+            data: langData,
+            borderColor: color,
+            backgroundColor: color + '22',
+            fill: false,
+            tension: 0.36,
+            borderWidth: 3.5,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: color,
+            pointBorderWidth: 3.5,
+            hitRadius: 8,
+            hoverBorderWidth: 3
+        };
+    });
+    
+    langChartInstance.data.datasets = newDatasets;
+    langChartInstance.update();
+    renderLegend(langChartInstance);
+}
 
 export async function renderLanguagesCountsChart(range = 'weekly'){
     const data = await getLanguagesTimeseries(range);
@@ -13,31 +136,50 @@ export async function renderLanguagesCountsChart(range = 'weekly'){
 
     const labels = data.map(d => d.date);
     
-    // Extract all unique languages from the data
-    const sample = data[0];
+    // Extract all unique languages from the latest data point
+    const sample = data[data.length - 1];
     const countsObj = sample.counts || {};
     const allLanguages = Object.keys(countsObj);
 
-    // Create a dataset for each language
-    const datasets = allLanguages.map((lang, i) => ({
-        label: toReadableKey(lang),
-        data: data.map(d => {
+    // Store raw data for each language
+    rawLanguageData = {};
+    allLanguages.forEach(lang => {
+        rawLanguageData[lang] = data.map(d => {
             const counts = d.counts || {};
             return Number(counts[lang] || 0);
-        }),
-        borderColor: colors[i % colors.length],
-        backgroundColor: colors[i % colors.length] + '22',
-        fill: false,
-        tension: 0.36,
-        borderWidth: 3.5,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        pointBackgroundColor: '#ffffff',
-        pointBorderColor: colors[i % colors.length],
-        pointBorderWidth: 3.5,
-        hitRadius: 8,
-        hoverBorderWidth: 3
-    }));
+        });
+    });
+
+    // Sort languages by their latest count (most popular first)
+    allLanguagesWithCounts = allLanguages.map(lang => ({
+        lang,
+        count: countsObj[lang] || 0
+    })).sort((a, b) => (b.count - a.count));
+
+    // Get top 10 languages for initial display
+    const topLanguages = allLanguagesWithCounts.slice(0, 10).map(l => l.lang);
+
+    // Create datasets for top 10 languages initially
+    const datasets = topLanguages.map((lang, i) => {
+        const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
+        const color = colors[langIndex % colors.length];
+        return {
+            label: lang,
+            data: rawLanguageData[lang],
+            borderColor: color,
+            backgroundColor: color + '22',
+            fill: false,
+            tension: 0.36,
+            borderWidth: 3.5,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: color,
+            pointBorderWidth: 3.5,
+            hitRadius: 8,
+            hoverBorderWidth: 3
+        };
+    });
 
     const canvas = document.querySelector('#languagesCountsChart');
     if(!canvas) return;
@@ -68,11 +210,13 @@ export async function renderLanguagesCountsChart(range = 'weekly'){
         langChartInstance.data.labels = labels;
         langChartInstance.data.datasets = datasets;
         langChartInstance.update();
+        renderSelector();
         renderLegend(langChartInstance);
         return;
     }
 
     langChartInstance = new Chart(ctx, config);
+    renderSelector();
     renderLegend(langChartInstance);
 }
 
