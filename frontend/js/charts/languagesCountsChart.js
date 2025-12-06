@@ -8,10 +8,10 @@ const colors = [
     '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444', '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
 ];
 
-// Get currently selected languages from checkboxes
+// Get currently selected languages
 function getSelectedLanguages(){
-    const checkboxes = document.querySelectorAll('.language-selector-popup input[type="checkbox"]:checked');
-    const selected = Array.from(checkboxes).map(cb => cb.value);
+    const items = document.querySelectorAll('.language-selector-item.selected');
+    const selected = Array.from(items).map(item => item.dataset.lang);
     if(selected.length > 0) return selected;
     // Default to top 10
     return allLanguagesWithCounts.slice(0, 10).map(l => l.lang);
@@ -39,35 +39,46 @@ function renderSelector(){
     const topLanguagesSet = new Set(allLanguagesWithCounts.slice(0, 10).map(l => l.lang));
     isInitializing = true;
     
+    // Create items container
+    const itemsContainer = document.createElement('div');
+    itemsContainer.className = 'language-selector-items';
+    
     allLanguagesWithCounts.forEach(({lang, count}) => {
-        const label = document.createElement('label');
-        label.className = 'language-selector-item';
+        const item = document.createElement('div');
+        item.className = 'language-selector-item';
+        item.dataset.lang = lang;
+        if(topLanguagesSet.has(lang)) item.classList.add('selected');
         
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.value = lang;
-        checkbox.checked = topLanguagesSet.has(lang);
+        item.innerHTML = `<span class="lang-name">${lang}</span><span class="lang-count">${count}</span>`;
         
-        const labelText = document.createElement('span');
-        labelText.className = 'language-selector-label';
-        labelText.innerHTML = `<span class="lang-name">${lang}</span><span class="lang-count">${count}</span>`;
-        
-        label.appendChild(checkbox);
-        label.appendChild(labelText);
-        
-        checkbox.addEventListener('change', () => {
+        item.addEventListener('click', () => {
             if(isInitializing) return;
-            const selected = Array.from(popup.querySelectorAll('input[type="checkbox"]:checked'));
-            if(selected.length > 10){
-                checkbox.checked = false;
-            } else {
+            const isSelected = item.classList.contains('selected');
+            const selectedCount = popup.querySelectorAll('.language-selector-item.selected').length;
+            
+            if(isSelected){
+                item.classList.remove('selected');
                 updateLanguagesChart();
                 updateToggleText(popup);
+            } else if(selectedCount < 10){
+                item.classList.add('selected');
+                updateLanguagesChart();
+                updateToggleText(popup);
+                updateLimitMessage(popup);
             }
         });
         
-        popup.appendChild(label);
+        itemsContainer.appendChild(item);
     });
+    
+    popup.appendChild(itemsContainer);
+    
+    // Add limit message
+    const limitMsg = document.createElement('div');
+    limitMsg.className = 'language-selector-limit';
+    limitMsg.textContent = 'Max 10 languages';
+    //popup.appendChild(limitMsg);
+    popup.insertBefore(limitMsg, popup.firstChild)
     
     isInitializing = false;
     
@@ -87,12 +98,21 @@ function renderSelector(){
     container.appendChild(wrapper);
     
     updateToggleText(popup);
+    updateLimitMessage(popup);
 }
 
 function updateToggleText(popup){
     const toggle = popup.parentElement.querySelector('.language-selector-toggle');
-    const count = popup.querySelectorAll('input[type="checkbox"]:checked').length;
+    const count = popup.querySelectorAll('.language-selector-item.selected').length;
     toggle.textContent = count > 0 ? `Languages (${count})` : 'Select Languages';
+}
+
+function updateLimitMessage(popup){
+    const count = popup.querySelectorAll('.language-selector-item.selected').length;
+    const limitMsg = popup.querySelector('.language-selector-limit');
+    if(limitMsg){
+        limitMsg.classList.toggle('show-warning', count >= 10);
+    }
 }
 
 // Update chart with selected languages
