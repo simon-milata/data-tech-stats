@@ -1,132 +1,122 @@
-import { getLanguagesTimeseries } from "../api.js";
+import { getLanguagesTimeseries } from '../api.js';
 
 let langChartInstance = null;
 let allLanguagesWithCounts = [];
-let rawLanguageData = {}; // Store raw data by language
-let isInitializing = false; // Prevent updates during initialization
+let rawLanguageData = {};
+let isInitializing = false;
+
 const colors = [
-    '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444', '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
+    '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444',
+    '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
 ];
 
-// Get currently selected languages
-function getSelectedLanguages(){
+function getSelectedLanguages() {
     const items = document.querySelectorAll('.language-selector-item.selected');
     const selected = Array.from(items).map(item => item.dataset.lang);
-    if(selected.length > 0) return selected;
-    // Default to top 10
-    return allLanguagesWithCounts.slice(0, 10).map(l => l.lang);
+    return selected.length > 0 ? selected : allLanguagesWithCounts.slice(0, 10).map(l => l.lang);
 }
 
-// Render the language selector popup
-function renderSelector(){
+function renderSelector() {
     const container = document.getElementById('languageSelectorContainer');
-    if(!container) return;
-    
+    if (!container) return;
+
     container.innerHTML = '';
     const wrapper = document.createElement('div');
     wrapper.className = 'language-selector-wrapper';
-    
-    // Create toggle button
+
     const toggle = document.createElement('button');
     toggle.className = 'language-selector-toggle';
     toggle.textContent = 'Select Languages';
-    
-    // Create popup
+
     const popup = document.createElement('div');
     popup.className = 'language-selector-popup';
     popup.style.display = 'none';
-    
+
     const topLanguagesSet = new Set(allLanguagesWithCounts.slice(0, 10).map(l => l.lang));
     isInitializing = true;
-    
-    // Create items container
+
     const itemsContainer = document.createElement('div');
     itemsContainer.className = 'language-selector-items';
-    
-    allLanguagesWithCounts.forEach(({lang, count}) => {
+
+    allLanguagesWithCounts.forEach(({ lang, count }) => {
         const item = document.createElement('div');
         item.className = 'language-selector-item';
         item.dataset.lang = lang;
-        if(topLanguagesSet.has(lang)) item.classList.add('selected');
-        
+        if (topLanguagesSet.has(lang)) item.classList.add('selected');
+
         item.innerHTML = `<span class="lang-name">${lang}</span><span class="lang-count">${count}</span>`;
-        
+
         item.addEventListener('click', () => {
-            if(isInitializing) return;
+            if (isInitializing) return;
             const isSelected = item.classList.contains('selected');
             const selectedCount = popup.querySelectorAll('.language-selector-item.selected').length;
-            
-            if(isSelected){
+
+            if (isSelected) {
                 item.classList.remove('selected');
                 updateLanguagesChart();
                 updateToggleText(popup);
-            } else if(selectedCount < 10){
+            } else if (selectedCount < 10) {
                 item.classList.add('selected');
                 updateLanguagesChart();
                 updateToggleText(popup);
                 updateLimitMessage(popup);
             }
         });
-        
+
         itemsContainer.appendChild(item);
     });
-    
+
     popup.appendChild(itemsContainer);
-    
-    // Add limit message
+
     const limitMsg = document.createElement('div');
     limitMsg.className = 'language-selector-limit';
     limitMsg.textContent = 'Max 10 languages';
-    //popup.appendChild(limitMsg);
-    popup.insertBefore(limitMsg, popup.firstChild)
-    
+    popup.insertBefore(limitMsg, popup.firstChild);
+
     isInitializing = false;
-    
+
     toggle.addEventListener('click', (e) => {
         e.stopPropagation();
         popup.style.display = popup.style.display === 'none' ? 'block' : 'none';
     });
-    
+
     document.addEventListener('click', (e) => {
-        if(!wrapper.contains(e.target)){
+        if (!wrapper.contains(e.target)) {
             popup.style.display = 'none';
         }
     });
-    
+
     wrapper.appendChild(toggle);
     wrapper.appendChild(popup);
     container.appendChild(wrapper);
-    
+
     updateToggleText(popup);
     updateLimitMessage(popup);
 }
 
-function updateToggleText(popup){
+function updateToggleText(popup) {
     const toggle = popup.parentElement.querySelector('.language-selector-toggle');
     const count = popup.querySelectorAll('.language-selector-item.selected').length;
     toggle.textContent = count > 0 ? `Languages (${count})` : 'Select Languages';
 }
 
-function updateLimitMessage(popup){
+function updateLimitMessage(popup) {
     const count = popup.querySelectorAll('.language-selector-item.selected').length;
     const limitMsg = popup.querySelector('.language-selector-limit');
-    if(limitMsg){
+    if (limitMsg) {
         limitMsg.classList.toggle('show-warning', count >= 10);
     }
 }
 
-// Update chart with selected languages
-function updateLanguagesChart(){
-    if(!langChartInstance) return;
-    
+function updateLanguagesChart() {
+    if (!langChartInstance) return;
+
     const selectedLangs = getSelectedLanguages();
-    
-    // Create new datasets for selected languages
     const newDatasets = selectedLangs.map((lang) => {
         const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
         const color = colors[langIndex % colors.length];
         const langData = rawLanguageData[lang] || [];
-        
+
         return {
             label: lang,
             data: langData,
@@ -144,24 +134,21 @@ function updateLanguagesChart(){
             hoverBorderWidth: 3
         };
     });
-    
+
     langChartInstance.data.datasets = newDatasets;
     langChartInstance.update();
     renderLegend(langChartInstance);
 }
 
-export async function renderLanguagesCountsChart(range = 'weekly'){
+export async function renderLanguagesCountsChart(range = 'weekly') {
     const data = await getLanguagesTimeseries(range);
-    if(!data || !data.length) return;
+    if (!data || !data.length) return;
 
     const labels = data.map(d => d.date);
-    
-    // Extract all unique languages from the latest data point
     const sample = data[data.length - 1];
     const countsObj = sample.counts || {};
     const allLanguages = Object.keys(countsObj);
 
-    // Store raw data for each language
     rawLanguageData = {};
     allLanguages.forEach(lang => {
         rawLanguageData[lang] = data.map(d => {
@@ -170,17 +157,13 @@ export async function renderLanguagesCountsChart(range = 'weekly'){
         });
     });
 
-    // Sort languages by their latest count (most popular first)
     allLanguagesWithCounts = allLanguages.map(lang => ({
         lang,
         count: countsObj[lang] || 0
     })).sort((a, b) => (b.count - a.count));
 
-    // Get top 10 languages for initial display
     const topLanguages = allLanguagesWithCounts.slice(0, 10).map(l => l.lang);
-
-    // Create datasets for top 10 languages initially
-    const datasets = topLanguages.map((lang, i) => {
+    const datasets = topLanguages.map((lang) => {
         const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
         const color = colors[langIndex % colors.length];
         return {
@@ -202,7 +185,7 @@ export async function renderLanguagesCountsChart(range = 'weekly'){
     });
 
     const canvas = document.querySelector('#languagesCountsChart');
-    if(!canvas) return;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     const config = {
@@ -216,7 +199,7 @@ export async function renderLanguagesCountsChart(range = 'weekly'){
             maintainAspectRatio: false,
             scales: {
                 x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                y: { grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v/1000)+'k' : v } }
+                y: { grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v / 1000) + 'k' : v } }
             },
             plugins: {
                 legend: { display: false },
@@ -226,7 +209,7 @@ export async function renderLanguagesCountsChart(range = 'weekly'){
         }
     };
 
-    if(langChartInstance){
+    if (langChartInstance) {
         langChartInstance.data.labels = labels;
         langChartInstance.data.datasets = datasets;
         langChartInstance.update();
@@ -240,8 +223,7 @@ export async function renderLanguagesCountsChart(range = 'weekly'){
     renderLegend(langChartInstance);
 }
 
-// Render a custom legend as styled chips
-function renderLegend(chart){
+function renderLegend(chart) {
     const container = document.getElementById('languagesLegend');
     if (!container) return;
     container.innerHTML = '';
@@ -262,19 +244,21 @@ function renderLegend(chart){
     });
 }
 
-// External HTML tooltip for Chart.js (same as multi-lines)
-function externalTooltip(context){
-    const {chart, tooltip} = context;
+function externalTooltip(context) {
+    const { chart, tooltip } = context;
     const parent = chart.canvas.parentNode;
     let tip = parent.querySelector('.chart-tooltip');
-    if (!tip){
+    if (!tip) {
         tip = document.createElement('div');
         tip.className = 'chart-tooltip';
         tip.innerHTML = '<div class="label"></div><div class="values"></div>';
         parent.appendChild(tip);
     }
 
-    if (tooltip.opacity === 0){ tip.style.opacity = 0; return; }
+    if (tooltip.opacity === 0) {
+        tip.style.opacity = 0;
+        return;
+    }
 
     const title = tooltip.title && tooltip.title.length ? tooltip.title[0] : '';
     tip.querySelector('.label').textContent = title;
@@ -320,8 +304,8 @@ function externalTooltip(context){
     const spaceLeft = left;
 
     let finalLeft, finalTop, transform;
-
     const margin = 12;
+
     if (top - tipHeight - margin >= 0) {
         finalTop = top - margin;
         const centerMin = parentRect.width * 0.35;
@@ -355,13 +339,8 @@ function externalTooltip(context){
         }
     }
 
-    const minLeft = 8;
-    const maxLeft = parentRect.width - tipWidth - 8;
-    finalLeft = Math.min(Math.max(finalLeft, minLeft), maxLeft);
-
-    const minTop = 8;
-    const maxTop = parentRect.height - tipHeight - 8;
-    finalTop = Math.min(Math.max(finalTop, minTop), maxTop);
+    finalLeft = Math.min(Math.max(finalLeft, 8), parentRect.width - tipWidth - 8);
+    finalTop = Math.min(Math.max(finalTop, 8), parentRect.height - tipHeight - 8);
 
     tip.style.left = finalLeft + 'px';
     tip.style.top = finalTop + 'px';
