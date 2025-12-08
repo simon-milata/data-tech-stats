@@ -1,8 +1,8 @@
 :root{
     --muted: #9ca3af;
     --text: #0f172a;
-    --accent-1: #8b5cf6; /* purple */
-    --accent-2: #fb923c; /* orange */
+    --accent-1: #bbbbbb;
+    --accent-2: #858585;
 }
 
 html,body{font-size:16px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -152,6 +152,86 @@ body {
 .chart-tooltip .tt-dot { width:10px; height:10px; border-radius:999px; display:inline-block; flex:0 0 10px; }
 .chart-tooltip .tt-name { color:#374151; font-weight:600; flex:1; }
 .chart-tooltip .tt-val { color:#0f172a; font-weight:700; }
+
+/* Language selector custom UI */
+#languageSelectorContainer { display:flex; align-items:center; margin-left:auto; }
+.language-selector-wrapper { position:relative; }
+.language-selector-toggle { 
+    background:rgba(243,244,246,0.6); 
+    border:1px solid rgba(15,23,42,0.08);
+    padding:6px 12px; 
+    border-radius:8px; 
+    font-size:0.85rem; 
+    font-weight:600;
+    color:#374151; 
+    cursor:pointer; 
+    transition:all 0.2s ease;
+    font-family:inherit;
+}
+.language-selector-toggle:hover { 
+    background:rgba(243,244,246,0.8);
+    border-color:rgba(15,23,42,0.12);
+}
+.language-selector-popup { 
+    position:absolute; 
+    top:100%; 
+    right:0; 
+    margin-top:8px;
+    background:#ffffff; 
+    border:1px solid rgba(15,23,42,0.1);
+    border-radius:10px; 
+    box-shadow:0 10px 30px rgba(15,23,42,0.08);
+    z-index:50;
+    max-height:280px;
+    overflow-y:auto;
+    min-width:160px;
+}
+.language-selector-item { 
+    display:flex; 
+    align-items:center; 
+    gap:8px; 
+    padding:10px 12px;
+    cursor:pointer; 
+    user-select:none;
+    transition:background 0.15s ease, box-shadow 0.15s ease;
+    border-radius:12px;
+}
+.language-selector-item:hover { background:rgba(159, 152, 173, 0.08); }
+.language-selector-item.selected { 
+    background:rgba(196, 196, 196, 0.15);
+    border-radius: 0%;
+}
+.language-selector-label { 
+    display:flex; 
+    gap:6px; 
+    align-items:center; 
+    flex:1;
+}
+.lang-name { 
+    font-size:0.85rem;
+    color:#374151;
+    font-weight:500;
+    flex:1;
+}
+.lang-count { 
+    font-size:0.75rem;
+    color:#9ca3af;
+    font-weight:500;
+}
+.language-selector-limit {
+    padding:8px 12px;
+    border-bottom:1px solid #e5e7eb;
+    font-size:0.75rem;
+    color:#9ca3af;
+    text-align:center;
+    opacity:0.6;
+    transition:all 0.2s ease;
+}
+.language-selector-limit.show-warning {
+    opacity:1;
+    color:#525252;
+    font-weight:600;
+}
 
 .muted { color: var(--muted); font-size: 0.95rem; }
 
