@@ -1,28 +1,36 @@
 import { renderMultiLinesChart } from './charts/components/multiLinesChart.js';
 import { renderLanguagesCountsChart } from './charts/languagesCountsChart.js';
 
-const buttons = document.querySelectorAll('.range-btn');
-let currentRange = 'weekly';
+const cards = document.querySelectorAll('.graph-card');
+const ranges = { repos: 'weekly', languages: 'weekly' };
 
-buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        buttons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+cards.forEach((card, index) => {
+    const cardType = index === 0 ? 'repos' : 'languages';
+    const buttons = card.querySelectorAll('.range-btn');
 
-        currentRange = btn.dataset.range;
+    buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            buttons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
 
-        try {
-            renderMultiLinesChart(null, null, currentRange);
-            renderLanguagesCountsChart(currentRange);
-        } catch (e) {
-            console.error('Error rendering charts:', e);
-        }
+            ranges[cardType] = btn.dataset.range;
+
+            try {
+                if (cardType === 'repos') {
+                    renderMultiLinesChart(null, null, ranges.repos);
+                } else {
+                    renderLanguagesCountsChart(ranges.languages);
+                }
+            } catch (e) {
+                console.error('Error rendering chart:', e);
+            }
+        });
     });
 });
 
 try {
-    renderMultiLinesChart(null, null, currentRange);
-    renderLanguagesCountsChart(currentRange);
+    renderMultiLinesChart(null, null, ranges.repos);
+    renderLanguagesCountsChart(ranges.languages);
 } catch (e) {
     console.error('Error rendering charts on load:', e);
 }
