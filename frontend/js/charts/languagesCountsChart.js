@@ -10,6 +10,43 @@ const colors = [
     '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
 ];
 
+function isoWeekToDate(isoWeek) {
+    const m = isoWeek.match(/(\d{4})-W(\d{2})/);
+    if (!m) return new Date(isoWeek);
+    const year = Number(m[1]);
+    const week = Number(m[2]);
+    const jan4 = new Date(year, 0, 4);
+    const day = jan4.getDay() || 7;
+    const week1Monday = new Date(jan4);
+    week1Monday.setDate(jan4.getDate() - (day - 1));
+    const monday = new Date(week1Monday);
+    monday.setDate(week1Monday.getDate() + (week - 1) * 7);
+    return monday;
+}
+
+function formatWeekLabel(dateStr, range = 'weekly') {
+    const optsDay = { month: 'short', day: 'numeric' };
+    const optsMonthYear = { month: 'short', year: 'numeric' };
+
+    if (range === 'weekly') {
+        const m = (dateStr || '').match(/(\d{4})-W(\d{2})/);
+        if (m) {
+            const start = isoWeekToDate(dateStr);
+            const end = new Date(start);
+            end.setDate(start.getDate() + 6);
+
+            const s = start.toLocaleDateString(undefined, optsDay);
+            const e = end.toLocaleDateString(undefined, optsDay);
+            return `${s} - ${e}, ${end.getFullYear()}`;
+        }
+        const d = new Date(dateStr);
+        return isNaN(d) ? String(dateStr) : d.toLocaleDateString(undefined, optsDay);
+    }
+
+    const d = (String(dateStr).match(/(\d{4})-W(\d{2})/)) ? isoWeekToDate(dateStr) : new Date(dateStr);
+    return isNaN(d) ? String(dateStr) : d.toLocaleDateString(undefined, optsMonthYear);
+}
+
 function getSelectedLanguages() {
     const items = document.querySelectorAll('.language-selector-item.selected');
     const selected = Array.from(items).map(item => item.dataset.lang);
@@ -144,7 +181,7 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
     const data = await getLanguagesTimeseries(range);
     if (!data || !data.length) return;
 
-    const labels = data.map(d => d.date);
+    const labels = data.map(d => formatWeekLabel(d.date, range));
     const sample = data[data.length - 1];
     const countsObj = sample.counts || {};
     const allLanguages = Object.keys(countsObj);
