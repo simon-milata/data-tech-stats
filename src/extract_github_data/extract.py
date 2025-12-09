@@ -1,11 +1,10 @@
 import os
 import time
-import random
 import logging
 
 from urllib import parse
 
-from .utils import running_on_lambda, make_get_request
+from .utils import running_on_lambda, make_get_request, get_scaled_delay
 
 if not running_on_lambda():
     from dotenv import load_dotenv
@@ -14,7 +13,8 @@ if not running_on_lambda():
     
 
 GITHUB_API_TOKEN = os.getenv("GITHUB_API_TOKEN")
-RESULTS_PER_PAGE = os.getenv("RESULTS_PER_PAGE", 1)
+RESULTS_PER_PAGE = int(os.getenv("RESULTS_PER_PAGE", 100))
+PAGES_PER_TOPIC = int(os.getenv("PAGES_PER_TOPIC", 10))
 
 GITHUB_SEARCH_API_URL = "https://api.github.com/search/"
 
@@ -77,7 +77,7 @@ def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]
     repo_counts = {}
     parsed_data = []
     for topic in topics:
-        for page in range(1, 1+1):
+        for page in range(1, PAGES_PER_TOPIC+1):
             repos_page_data = get_repos_from_page(topic, page)
             repo_counts = get_total_counts(repo_counts, topic, repos_page_data)
 
@@ -86,7 +86,7 @@ def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]
 
             if not page == 1:
                 # Only add a delay when not getting languages
-                time.sleep(random.uniform(1, 3))
+                time.sleep(get_scaled_delay(RESULTS_PER_PAGE))
                 continue
 
             # Only get language data from the first page to avoid many API calls
@@ -97,5 +97,6 @@ def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]
                     "repo_name": repo["name"], 
                     "languages": repo_languages
                 })
+        logging.info(f"Scraped {PAGES_PER_TOPIC} pages for '{topic}'.")
             
     return parsed_data, repo_counts, language_data

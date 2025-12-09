@@ -55,7 +55,10 @@ def setup_logging(logging_level) -> None:
     if running_on_lambda():
         logging.getLogger().setLevel(logging.INFO)
     else:
-        logging.basicConfig(level=logging_level)
+        logging.basicConfig(
+            level=logging_level, datefmt="%H:%M:%S",
+            format="%(asctime)s - %(levelname)s - %(message)s"
+        )
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("boto3").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -87,3 +90,13 @@ def transform_lang_list_long(language_data: dict) -> list[dict]:
             "bytes": bytes_count
         })
     return rows
+
+
+def get_scaled_delay(per_page, max_delay=3.0, min_delay=0.0, max_per_page=100):
+    """
+    Retuns a delay based on results per page. Higher results per page => lower delay.
+    """
+    per_page = max(1, min(per_page, max_per_page))
+    factor = 1 - (per_page / max_per_page)
+    delay = min_delay + factor * (max_delay - min_delay)
+    return delay
