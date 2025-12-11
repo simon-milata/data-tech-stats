@@ -66,37 +66,49 @@ def get_languages(languages_url: str) -> dict[str, int]:
 
     return response.json()
 
-def get_total_counts(repo_counts, topic, repos_page_data) -> dict[str, int]:
-    if topic not in repo_counts:
-        repo_counts[topic] = repos_page_data["total_count"]
-    return repo_counts
+
+def fetch_repos_per_topic(topic: str) -> tuple[list[dict], int]:
+    """Fetches total repo counts and repo data for all pages for a topic"""
+    topic_repo_data = []
+    for page in range(1, PAGES_PER_TOPIC+1):
+        repos_page_data = get_repos_from_page(topic, page)
+
+        parsed_page_data = parse_repo_data(repos_page_data["items"])
+        topic_repo_data.extend(parsed_page_data)
+
+        if page == 1:
+            repo_counts = repos_page_data["total_count"]
+
+        if page != PAGES_PER_TOPIC: # Don't sleep after last page
+            time.sleep(get_scaled_delay(RESULTS_PER_PAGE))
+        
+    logging.info(f"Scraped repo data from {PAGES_PER_TOPIC} pages for topic '{topic}'.")
+    return topic_repo_data, repo_counts
+
+
+def fetch_language_data(repo_data: list[dict]) -> list[dict]:
+    """Fetches language data for each repo on the first page of repos for each topic"""
+    language_data = []
+    for repo in repo_data:
+        repo_languages = get_languages(repo["languages_url"])
+        language_data.append({
+            "repo_id": repo["id"], 
+            "repo_name": repo["name"], 
+            "languages": repo_languages
+        })
+    return language_data
 
 
 def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]:
     language_data = []
     repo_counts = {}
-    parsed_data = []
+    repos_data = []
     for topic in topics:
-        for page in range(1, PAGES_PER_TOPIC+1):
-            repos_page_data = get_repos_from_page(topic, page)
-            repo_counts = get_total_counts(repo_counts, topic, repos_page_data)
-
-            parsed_page_data = parse_repo_data(repos_page_data["items"])
-            parsed_data.extend(parsed_page_data)
-
-            if not page == 1:
-                # Only add a delay when not getting languages
-                time.sleep(get_scaled_delay(RESULTS_PER_PAGE))
-                continue
-
-            # Only get language data from the first page to avoid many API calls
-            for repo in parsed_page_data:
-                repo_languages = get_languages(repo["languages_url"])
-                language_data.append({
-                    "repo_id": repo["id"], 
-                    "repo_name": repo["name"], 
-                    "languages": repo_languages
-                })
-        logging.info(f"Scraped {PAGES_PER_TOPIC} pages for '{topic}'.")
+        topic_repo_data, topic_repo_counts = fetch_repos_per_topic(topic)
+        repos_data.extend(topic_repo_data)
+        repo_counts[topic] = topic_repo_counts
+        # Only get language data from the first page to reduce API calls
+        page_language_data = fetch_language_data(topic_repo_data[:RESULTS_PER_PAGE])
+        language_data.extend(page_language_data)
             
-    return parsed_data, repo_counts, language_data
+    return repos_data, repo_counts, language_data
