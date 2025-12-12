@@ -1,6 +1,7 @@
 import os
 import time
 import logging
+from collections import defaultdict
 
 from urllib import parse
 
@@ -28,7 +29,7 @@ if not GITHUB_API_TOKEN:
     logging.warning("Github API token not found!")
 
 
-def parse_repo_data(data: list[dict]) -> list[dict]:
+def parse_repo_data(data: list[dict], topic_queried: str) -> list[dict]:
     parsed_data = []
     for item in data:
         repo_license = item.get("license", {})
@@ -44,7 +45,8 @@ def parse_repo_data(data: list[dict]) -> list[dict]:
                 "forks": item["forks_count"],
                 "license": repo_license.get("spdx_id", None) if repo_license else "",
                 "open_issues": item["open_issues_count"],
-                "topics": item["topics"]
+                "topics": item["topics"],
+                "topic_queried": topic_queried
             }
         )
     return parsed_data
@@ -73,7 +75,7 @@ def fetch_repos_per_topic(topic: str) -> tuple[list[dict], int]:
     for page in range(1, PAGES_PER_TOPIC+1):
         repos_page_data = get_repos_from_page(topic, page)
 
-        parsed_page_data = parse_repo_data(repos_page_data["items"])
+        parsed_page_data = parse_repo_data(repos_page_data["items"], topic)
         topic_repo_data.extend(parsed_page_data)
 
         if page == 1:
@@ -99,16 +101,44 @@ def fetch_language_data(repo_data: list[dict]) -> list[dict]:
     return language_data
 
 
+def deduplicate_repo_data(repo_data: list[dict]) -> list[dict]:
+    """Deduplicates repo data by keeping the first occurance of a repo"""
+    seen_ids = set()
+    deduplicated = []
+    for repo in repo_data:
+        if repo["id"] not in seen_ids:
+            seen_ids.add(repo["id"])
+            deduplicated.append(repo)
+    return deduplicated
+
+
+def keep_n_repos_per_topic(repo_data: list[dict], n: int = 100) -> list[dict]:
+    """Keeps n repos for each topic"""
+    topic_counts = defaultdict(lambda: 0)
+    n_repos = []
+    for repo in repo_data:
+        if topic_counts[repo["topic_queried"]] == n:
+            continue
+        n_repos.append(repo)
+        topic_counts[repo["topic_queried"]] += 1
+    return n_repos
+
+
+def get_languages_data(repo_data: list[dict]) -> list[dict]:
+    language_repos = keep_n_repos_per_topic(repo_data, RESULTS_PER_PAGE)
+    
+    # Deduplicate languages after getting first N to avoid skewed data
+    language_repos = deduplicate_repo_data(language_repos)
+    language_data = fetch_language_data(language_repos)
+    return language_data
+
+
 def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]:
-    language_data = []
     repo_counts = {}
     repos_data = []
     for topic in topics:
         topic_repo_data, topic_repo_counts = fetch_repos_per_topic(topic)
         repos_data.extend(topic_repo_data)
         repo_counts[topic] = topic_repo_counts
-        # Only get language data from the first page to reduce API calls
-        page_language_data = fetch_language_data(topic_repo_data[:RESULTS_PER_PAGE])
-        language_data.extend(page_language_data)
-            
-    return repos_data, repo_counts, language_data
+        
+    return repos_data, repo_counts

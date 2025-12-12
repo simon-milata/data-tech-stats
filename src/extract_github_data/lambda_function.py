@@ -6,7 +6,9 @@ from .utils import (
     running_on_lambda, create_s3_client, get_search_queries, save_parquet_to_s3,
     get_date_str, setup_logging, save_json_to_s3, transform_lang_list_long
 )
-from .extract import get_all_repos_data
+from .extract import (
+    get_all_repos_data, deduplicate_repo_data, get_languages_data
+)
 
 
 if not running_on_lambda():
@@ -32,7 +34,9 @@ def lambda_handler(event, context):
         s3_client=s3_client, bucket=SEARCH_QUERIES_BUCKET, path=SEARCH_QUERIES_PATH
     )
     logging.info(f"Search queries: {search_queries}")
-    data, repo_counts, language_data = get_all_repos_data(topics=search_queries)
+    data, repo_counts = get_all_repos_data(topics=search_queries)
+    language_data = get_languages_data(data)
+    data = deduplicate_repo_data(data)
 
     language_data_long = []
     for row in language_data:
