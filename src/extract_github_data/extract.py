@@ -21,6 +21,7 @@ headers = {
 }
 
 def parse_repo_data(data: list[dict], topic_queried: str) -> list[dict]:
+    """Parses repo data and keeps and renames specific keys."""
     parsed_data = []
     for item in data:
         repo_license = item.get("license", {})
@@ -44,6 +45,7 @@ def parse_repo_data(data: list[dict], topic_queried: str) -> list[dict]:
 
 
 def get_repos_from_page(topic: str, page: int) -> dict:
+    """Builds an API url and makes a request. Returns the data from the API as a dict."""
     params = f"repositories?q=topic:{topic}&page={page}&sort=stars&per_page={settings.results_per_page}"
     url = parse.urljoin(base="https://api.github.com/search/", url=params)
     logging.debug(f"Getting data from '{url}'.")
@@ -54,6 +56,7 @@ def get_repos_from_page(topic: str, page: int) -> dict:
 
 
 def get_languages(languages_url: str) -> dict[str, int]:
+    """Fetches languages data from the repo languages API and returns the result as a dict."""
     logging.debug(f"Fetching languages from '{languages_url}'.")
     response = make_get_request(url=languages_url, headers=headers)
 
@@ -116,6 +119,7 @@ def keep_n_repos_per_topic(repo_data: list[dict], n: int = 100) -> list[dict]:
 
 
 def get_languages_data(repo_data: list[dict]) -> list[dict]:
+    """Gets deduplicated languages data for the first {results_per_page} repos for each topic."""
     language_repos = keep_n_repos_per_topic(repo_data, settings.results_per_page)
     
     # Deduplicate languages after getting first N to avoid skewed data
@@ -125,6 +129,7 @@ def get_languages_data(repo_data: list[dict]) -> list[dict]:
 
 
 def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]:
+    """Gets total repo counts and repo data per topic from all pages."""
     repo_counts = {}
     repos_data = []
     for topic in topics:

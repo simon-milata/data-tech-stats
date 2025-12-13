@@ -27,15 +27,18 @@ def create_s3_client(profile: str = "default", region: str = None):
 
 
 def get_search_queries(s3_client, bucket: str, path: str) -> list[str]:
+    """Fetches a list of topics to search in API."""
     body = s3_client.get_object(Bucket=bucket, Key=path)["Body"]
     return json.load(body)
 
 
 def get_date_str(date_time: datetime) -> str:
+    """Returns datetime as a Y/m/d string."""
     return date_time.strftime("%Y/%m/%d")
 
 
 def save_parquet_to_s3(s3_client, data: list[dict], bucket: str, path: str):
+    """Converts a list of dicts to a pyarrow table and saves it as a parquet file to S3."""
     table = pa.Table.from_pylist(data)
 
     buffer = BytesIO()
@@ -52,6 +55,7 @@ def save_json_to_s3(s3_client, data: list[dict], bucket: str, path: str):
 
 
 def setup_logging(logging_level) -> None:
+    """Setups up the logging level and format for the logger running."""
     if running_on_lambda():
         logging.getLogger().setLevel(logging_level)
     else:
@@ -67,6 +71,7 @@ def setup_logging(logging_level) -> None:
 
 
 def make_get_request(url: str, headers: dict, retries: int = 0, max_retries: int = 5) -> requests.Response:
+    """Makes a get request. Sleeps and retries if status code is not 200. Fails if max_retries = retries."""
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
         if retries < max_retries:
@@ -81,6 +86,10 @@ def make_get_request(url: str, headers: dict, retries: int = 0, max_retries: int
 
 
 def transform_lang_list_long(language_data: dict) -> list[dict]:
+    """
+    Transforms a row of language data into a long format. 
+    Each language in the dict of languages for the repo becomes one row in the new list.
+    """
     rows = []
     for lang, bytes_count in language_data["languages"].items():
         rows.append({
