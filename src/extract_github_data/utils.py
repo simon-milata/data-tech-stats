@@ -53,7 +53,7 @@ def save_json_to_s3(s3_client, data: list[dict], bucket: str, path: str):
 
 def setup_logging(logging_level) -> None:
     if running_on_lambda():
-        logging.getLogger().setLevel(logging.INFO)
+        logging.getLogger().setLevel(logging_level)
     else:
         logging.basicConfig(
             level=logging_level, datefmt="%H:%M:%S",
