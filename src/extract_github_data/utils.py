@@ -79,7 +79,7 @@ def make_get_request(url: str, headers: dict, retries: int = 0, max_retries: int
             time.sleep(retries)
             return make_get_request(url=url, headers=headers, retries=retries + 1)
         else:
-            raise Exception(f"Max for '{url}' retries reached!")
+            raise Exception(f"Max retries ({max_retries}) reached for '{url}'!")
     
     logging.debug(f"Succesfully fetched data from '{url}'.")
     return response
