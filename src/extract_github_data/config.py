@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     
     results_per_page: int = 100
     pages_per_topic: int = 10
+    languages_per_topic: int = 50
     aws_profile_name: str = "default"
     aws_region_name: str = "eu-central-1"
     logging_level: str = "INFO"

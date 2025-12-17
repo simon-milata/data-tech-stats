@@ -112,9 +112,9 @@ def deduplicate_repo_data(repo_data: list[dict]) -> list[dict]:
     return deduplicated
 
 
-def keep_n_repos_per_topic(repo_data: list[dict], n: int = 100) -> list[dict]:
+def keep_n_repos_per_topic(repo_data: list[dict], n: int = 50) -> list[dict]:
     """Keeps n repos for each topic"""
-    topic_counts = defaultdict(lambda: 0)
+    topic_counts = defaultdict(int)
     n_repos = []
     for repo in repo_data:
         if topic_counts[repo["topic_queried"]] == n:
@@ -125,8 +125,8 @@ def keep_n_repos_per_topic(repo_data: list[dict], n: int = 100) -> list[dict]:
 
 
 def get_languages_data(repo_data: list[dict]) -> list[dict]:
-    """Gets deduplicated languages data for the first {results_per_page} repos for each topic."""
-    language_repos = keep_n_repos_per_topic(repo_data, settings.results_per_page)
+    """Gets deduplicated languages data for the first {languages_per_topic} repos for each topic."""
+    language_repos = keep_n_repos_per_topic(repo_data, settings.languages_per_topic)
     
     # Deduplicate languages after getting first N to avoid skewed data
     language_repos = deduplicate_repo_data(language_repos)
