@@ -83,6 +83,10 @@ def fetch_repos_per_topic(topic: str) -> tuple[list[dict], int]:
 
 def fetch_language_data(repo_data: list[dict]) -> list[dict]:
     """Fetches language data for each repo on the first page of repos for each topic"""
+    total = len(repo_data)
+    processed = 0
+    log_every = total // 10
+
     language_data = []
     for repo in repo_data:
         repo_languages = get_languages(repo["languages_url"])
@@ -91,6 +95,9 @@ def fetch_language_data(repo_data: list[dict]) -> list[dict]:
             "repo_name": repo["name"], 
             "languages": repo_languages
         })
+        processed += 1
+        if processed % log_every == 0 or processed == total:
+            logging.info(f"Succesfully fetched language data for {processed}/{total} repos.")
     return language_data
 
 
