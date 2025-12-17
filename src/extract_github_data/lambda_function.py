@@ -32,6 +32,7 @@ def lambda_handler(event, context):
     language_data = get_languages_data(data)
     data = deduplicate_repo_data(data)
 
+    logging.info("Transforming language data into long format.")
     language_data_long = []
     for row in language_data:
         language_data_long.extend(transform_lang_list_long(row))

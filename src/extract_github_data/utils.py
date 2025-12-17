@@ -39,19 +39,23 @@ def get_date_str(date_time: datetime) -> str:
 
 def save_parquet_to_s3(s3_client, data: list[dict], bucket: str, path: str):
     """Converts a list of dicts to a pyarrow table and saves it as a parquet file to S3."""
+    logging.info(f"Converting data to pyarrow table. Rows: {len(data)}.")
     table = pa.Table.from_pylist(data)
 
     buffer = BytesIO()
+    logging.info("Writing pyarrow table to buffer.")
     pq.write_table(table, buffer, compression="snappy")
     buffer.seek(0)
 
-    logging.debug(f"Uploading paruqet data to {path}.")
+    logging.info(f"Uploading paruqet data to {path}.")
     s3_client.upload_fileobj(Bucket=bucket, Key=path, Fileobj=buffer)
+    logging.info(f"Succesfully uploaded paruqet data to {path}.")
 
 
 def save_json_to_s3(s3_client, data: list[dict], bucket: str, path: str):
-    logging.debug(f"Uploading JSON data to {path}.")
+    logging.info(f"Uploading JSON data to {path}.")
     s3_client.put_object(Bucket=bucket, Key=path, Body=json.dumps(data))
+    logging.info(f"Succesfully uploaded JSON data to {path}.")
 
 
 def setup_logging(logging_level) -> None:
