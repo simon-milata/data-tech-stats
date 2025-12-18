@@ -105,6 +105,17 @@ def transform_lang_list_long(language_data: dict) -> list[dict]:
     return rows
 
 
+def transfrom_lang_data(language_data: dict) -> list[dict]:
+    """Transforms language data rows into long format."""
+    logging.info("Transforming language data into long format.")
+    language_data_long = []
+    for row in language_data:
+        language_data_long.extend(transform_lang_list_long(row))
+
+    logging.info("Succesfully transformed language data into long format.")
+    return language_data_long
+
+
 def get_scaled_delay(per_page, max_delay=3.0, min_delay=0.0, max_per_page=100):
     """
     Retuns a delay based on results per page. Higher results per page => lower delay.

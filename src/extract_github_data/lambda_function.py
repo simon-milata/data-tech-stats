@@ -3,7 +3,7 @@ from datetime import datetime
 
 from .utils import (
     running_on_lambda, create_s3_client, get_search_queries, save_parquet_to_s3,
-    setup_logging, save_json_to_s3, transform_lang_list_long, build_output_path
+    setup_logging, save_json_to_s3, transfrom_lang_data, build_output_path
 )
 from .extract import (
     get_all_repos_data, deduplicate_repo_data, get_languages_data
@@ -32,10 +32,7 @@ def lambda_handler(event, context):
     language_data = get_languages_data(data)
     data = deduplicate_repo_data(data)
 
-    logging.info("Transforming language data into long format.")
-    language_data_long = []
-    for row in language_data:
-        language_data_long.extend(transform_lang_list_long(row))
+    language_data_long = transfrom_lang_data(language_data)
 
     repos_output_path = build_output_path(settings.data_output_path, run_datetime, "repos.parquet")
     save_parquet_to_s3(s3_client=s3_client, data=data, bucket=settings.data_output_bucket, path=repos_output_path)
