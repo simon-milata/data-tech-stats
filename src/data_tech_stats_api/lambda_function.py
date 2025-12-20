@@ -56,7 +56,6 @@ def get_repo_comparison_data(repos: Annotated[list[str], Query()], interval: Lit
 
         df = df[columns_to_keep].copy()
         df = df[df["name"].isin(repos)]
-        df = df.drop_duplicates(subset=["name"])
 
         period_entry = {}
 
