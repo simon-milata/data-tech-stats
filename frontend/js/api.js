@@ -9,27 +9,43 @@ export async function getRepoCounts(range = 'weekly') {
         return { date: entry.date, count: total };
     });
 }
+async function fetchWithCache(url, key, ttlMinutes) {
+    const now = new Date().getTime();
+    const cached = localStorage.getItem(key);
 
-export async function getRepoCountsByTopic(range = 'weekly') {
+    if (cached) {
+        const { timestamp, data } = JSON.parse(cached);
+        if (now - timestamp < ttlMinutes * 60 * 1000) {
+            return data;
+        }
+        localStorage.removeItem(key);
+    }
+
     if (!API_BASE) return [];
     try {
-        const res = await fetch(`${API_BASE}/repo-counts?interval=${encodeURIComponent(range)}`);
+        const res = await fetch(url);
         if (!res.ok) throw new Error('Network response was not ok');
-        return await res.json();
+        const data = await res.json();
+        localStorage.setItem(key, JSON.stringify({ timestamp: now, data }));
+        return data;
     } catch (err) {
         console.warn('API fetch failed:', err);
         return [];
     }
 }
 
+export async function getRepoCountsByTopic(range = 'weekly') {
+    return fetchWithCache(
+        `${API_BASE}/repo-counts?interval=${encodeURIComponent(range)}`,
+        `repoCounts_${range}`,
+        60
+    );
+}
+
 export async function getLanguagesTimeseries(range = 'weekly') {
-    if (!API_BASE) return [];
-    try {
-        const res = await fetch(`${API_BASE}/primary-languages?interval=${encodeURIComponent(range)}`);
-        if (!res.ok) throw new Error('Network response was not ok');
-        return await res.json();
-    } catch (err) {
-        console.warn('API fetch failed:', err);
-        return [];
-    }
+    return fetchWithCache(
+        `${API_BASE}/primary-languages?interval=${encodeURIComponent(range)}`,
+        `languages_${range}`,
+        60
+    );
 }
