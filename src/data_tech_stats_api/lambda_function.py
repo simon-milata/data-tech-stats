@@ -3,6 +3,7 @@ from typing import Literal, Annotated
 from collections import defaultdict
 
 from fastapi import FastAPI, APIRouter, Query
+from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
 from .config import AWSConfig
@@ -18,6 +19,14 @@ running_on_lambda = running_on_lambda()
 aws_config = AWSConfig()
 app = FastAPI()
 router = APIRouter(prefix="/data-tech-stats/api")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:5500"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 s3_client = create_s3_client(aws_config.profile, aws_config.region)
 
