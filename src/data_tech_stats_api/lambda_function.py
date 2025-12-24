@@ -39,6 +39,13 @@ def get_primary_languages(interval: Literal["weekly", "monthly"]):
     return content
 
 
+@router.get("/repo-list")
+def get_repo_list():
+    repo_list_path = f"{aws_config.aggregated_data_path}/repo_list/repo_list.json"
+    repo_list_obj = get_object(s3_client, aws_config.aggregated_bucket, repo_list_path)
+    return json.load(repo_list_obj["Body"])
+
+
 @router.get("/repo-comparison")
 def get_repo_comparison_data(repos: Annotated[list[str], Query()], interval: Literal["weekly", "monthly"]):
     objects = get_objects(s3_client, aws_config.github_data_bucket, aws_config.github_data_prefix)
