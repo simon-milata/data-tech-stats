@@ -1,11 +1,20 @@
 import { renderMultiLinesChart } from './charts/components/multiLinesChart.js';
 import { renderLanguagesCountsChart } from './charts/languagesCountsChart.js';
+import { initRepoComparisonChart } from './charts/repoComparisonChart.js';
 
 const cards = document.querySelectorAll('.graph-card');
 const ranges = { repos: 'weekly', languages: 'weekly' };
 
-cards.forEach((card, index) => {
-    const cardType = index === 0 ? 'repos' : 'languages';
+cards.forEach((card) => {
+    let cardType;
+    if (card.querySelector('#repoCountsChart')) {
+        cardType = 'repos';
+    } else if (card.querySelector('#repoComparisonChart')) {
+        return;
+    } else {
+        cardType = 'languages';
+    }
+
     const buttons = card.querySelectorAll('.range-btn');
 
     buttons.forEach(btn => {
@@ -31,6 +40,7 @@ cards.forEach((card, index) => {
 try {
     renderMultiLinesChart(null, null, ranges.repos);
     renderLanguagesCountsChart(ranges.languages);
+    initRepoComparisonChart();
 } catch (e) {
     console.error('Error rendering charts on load:', e);
 }

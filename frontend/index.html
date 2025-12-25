@@ -51,6 +51,35 @@
                 </div>
                 <div id="languagesLegend" class="chart-legend" aria-hidden="false"></div>
             </div>
+            
+            <!-- New Comparison Graph Card -->
+            <div class="graph-card">
+                <div class="card-top">
+                    <h2>Repository Comparison</h2>
+                    <div class="controls">
+                        <div class="range-switcher" id="compRangeSwitcher">
+                            <button class="range-btn active" data-range="weekly">Weekly</button>
+                            <button class="range-btn" data-range="monthly">Monthly</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="comparison-controls">
+                    <div class="metric-switcher range-switcher" id="metricSwitcher">
+                        <button class="metric-btn range-btn active" data-metric="stars">Stars</button>
+                        <button class="metric-btn range-btn" data-metric="watchers">Watchers</button>
+                        <button class="metric-btn range-btn" data-metric="forks">Forks</button>
+                        <button class="metric-btn range-btn" data-metric="open_issues">Open Issues</button>
+                    </div>
+                    <div class="repo-selector">
+                        <input type="text" id="repoSearch" placeholder="Search and select up to 5 repositories...">
+                        <div id="repoListContainer" class="repo-list-container"></div>
+                    </div>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="repoComparisonChart" aria-label="Repository comparison chart" role="img"></canvas>
+                </div>
+                <div id="repoComparisonLegend" class="chart-legend" aria-hidden="false"></div>
+            </div>
         </div>
     </main>
 

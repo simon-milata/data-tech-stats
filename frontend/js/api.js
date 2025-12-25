@@ -49,3 +49,19 @@ export async function getLanguagesTimeseries(range = 'weekly') {
         60
     );
 }
+
+export async function getRepoList() {
+    return fetchWithCache(
+        `${API_BASE}/repo-list`,
+        `repoList`,
+        60 * 24 // Cache for 24 hours
+    );
+}
+
+export async function getRepoComparison(repos, range = 'weekly') {
+    const params = new URLSearchParams();
+    params.append('interval', range);
+    repos.forEach(repo => params.append('repos', repo));
+    const reposKey = [...repos].sort().join(',');
+    return fetchWithCache(`${API_BASE}/repo-comparison?${params.toString()}`, `repoComparison_${range}_${reposKey}`, 60);
+}
