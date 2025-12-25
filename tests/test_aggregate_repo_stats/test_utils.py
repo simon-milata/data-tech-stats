@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from aggregate_repo_stats.utils import (
-    get_date_from_key, group_keys_by_period, pick_latest_key_per_period
+    get_date_from_key, group_keys_by_interval, pick_latest_key_per_period
 )
 
 def test_get_date_from_key():
@@ -20,7 +20,7 @@ def test_group_keys_by_week():
         "2025-W47": ["prefix/2025/11/20/object.json"], 
         "2025-W46": ["prefix/2025/11/12/object.json"]
     }
-    assert group_keys_by_period(keys, "week") == result
+    assert group_keys_by_interval(keys, "weekly") == result
 
 
 def test_group_keys_by_week_single_digit_week():
@@ -30,7 +30,7 @@ def test_group_keys_by_week_single_digit_week():
         "2025-W03": ["prefix/2025/01/14/object.json"], 
         "2025-W01": ["prefix/2025/01/5/object.json"]
     }
-    assert group_keys_by_period(keys, "week") == result
+    assert group_keys_by_interval(keys, "weekly") == result
 
 
 def test_pick_latest_key_per_week():
@@ -54,7 +54,7 @@ def test_group_keys_by_month_same_year_month():
     result = {
         "2025-01": ["prefix/2025/01/14/object.json", "prefix/2025/01/5/object.json"]
     }
-    assert group_keys_by_period(keys, "month") == result
+    assert group_keys_by_interval(keys, "monthly") == result
 
 
 def test_group_keys_by_month_same_year_different_month():
@@ -68,7 +68,7 @@ def test_group_keys_by_month_same_year_different_month():
         "2025-09": ["prefix/2025/9/24/object.json"], 
         "2025-10": ["prefix/2025/10/20/object.json", "prefix/2025/10/12/object.json"]
     }
-    assert group_keys_by_period(keys, "month") == result
+    assert group_keys_by_interval(keys, "monthly") == result
 
 
 def test_group_keys_by_month_different_year_different_month():
@@ -83,7 +83,7 @@ def test_group_keys_by_month_different_year_different_month():
         "2024-10": ["prefix/2024/10/20/object.json"], 
         "2025-10": ["prefix/2025/10/12/object.json"]
     }
-    assert group_keys_by_period(keys, "month") == result
+    assert group_keys_by_interval(keys, "monthly") == result
 
 
 def test_pick_latest_key_per_month():
