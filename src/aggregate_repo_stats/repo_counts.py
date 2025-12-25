@@ -1,14 +1,14 @@
 import json
 
 from .utils import (
-    group_keys_by_period, pick_latest_key_per_period, get_object, save_data_to_s3
+    group_keys_by_interval, pick_latest_key_per_period, get_object, save_data_to_s3
 )
 
 
-def aggregate_repo_counts(s3_client, repo_count_keys, period, aws_config):
+def aggregate_repo_counts(s3_client, repo_count_keys, interval, aws_config):
     data = []
 
-    grouped_keys = group_keys_by_period(repo_count_keys, period)
+    grouped_keys = group_keys_by_interval(repo_count_keys, interval)
     top_keys = pick_latest_key_per_period(grouped_keys)
 
     for key, value in top_keys.items():

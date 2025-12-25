@@ -1,7 +1,7 @@
 import pandas as pd
 
 from .utils import (
-    group_keys_by_period, pick_latest_key_per_period, get_object, parse_parquet, save_data_to_s3
+    group_keys_by_interval, pick_latest_key_per_period, get_object, parse_parquet, save_data_to_s3
 )
 
 
@@ -10,8 +10,8 @@ def get_primary_lang_counts(df: pd.DataFrame) -> dict[str, int]:
     return counts_dict
 
 
-def aggregate_primary_languages(s3_client, keys, period, aws_config):
-    grouped_keys = group_keys_by_period(keys, period)
+def aggregate_primary_languages(s3_client, keys, interval, aws_config):
+    grouped_keys = group_keys_by_interval(keys, interval)
     top_keys = pick_latest_key_per_period(grouped_keys)
 
     data = []
