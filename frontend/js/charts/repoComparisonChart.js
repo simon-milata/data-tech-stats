@@ -89,14 +89,17 @@ function renderUI() {
 
 function renderSelected() {
     selectedContainer.innerHTML = '';
-    selectedRepos.forEach(repo => {
+    selectedRepos.forEach(repoId => {
+        const repo = allRepos.find(r => r.id === repoId);
+        const repoName = repo ? repo.name : repoId;
+
         const chip = document.createElement('div');
         chip.className = 'selected-repo-chip';
         chip.innerHTML = `
-            <span>${repo}</span>
-            <button type="button" class="remove-repo-btn" aria-label="Remove ${repo}">&times;</button>
+            <span>${repoName}</span>
+            <button type="button" class="remove-repo-btn" aria-label="Remove ${repoName}">&times;</button>
         `;
-        chip.querySelector('.remove-repo-btn').onclick = () => toggleRepo(repo);
+        chip.querySelector('.remove-repo-btn').onclick = () => toggleRepo(repoId);
         selectedContainer.appendChild(chip);
     });
 }
@@ -107,7 +110,7 @@ function renderOptions() {
 
     const filtered = allRepos.filter(r => {
         const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const notSelected = !selectedRepos.has(r.name);
+        const notSelected = !selectedRepos.has(r.id);
         return matchesSearch && notSelected;
     });
 
@@ -130,7 +133,7 @@ function renderOptions() {
         }
         div.textContent = repo.name;
         if (!maxReached) {
-            div.onclick = () => toggleRepo(repo.name);
+            div.onclick = () => toggleRepo(repo.id);
         }
         repoListContainer.appendChild(div);
     });
@@ -147,12 +150,12 @@ function setupSearch() {
     });
 }
 
-function toggleRepo(repoName) {
-    if (selectedRepos.has(repoName)) {
-        selectedRepos.delete(repoName);
+function toggleRepo(repoId) {
+    if (selectedRepos.has(repoId)) {
+        selectedRepos.delete(repoId);
     } else {
         if (selectedRepos.size >= MAX_SELECTION) return;
-        selectedRepos.add(repoName);
+        selectedRepos.add(repoId);
         repoSearch.value = '';
         searchTerm = '';
     }
@@ -222,17 +225,30 @@ async function updateChart() {
     }
 
     const reposArray = Array.from(selectedRepos);
-    const data = await getRepoComparison(reposArray, currentRange);
+    let data;
+    try {
+        data = await getRepoComparison(reposArray, currentRange);
+    } catch (error) {
+        console.error("Failed to fetch repo comparison data:", error);
+        return;
+    }
     
     if (updateId !== latestUpdateId) return;
 
     if (!data || data.length === 0) return;
 
     const labels = data.map(d => formatWeekLabel(d.date, currentRange));
-    const datasets = reposArray.map((repoName, index) => {
+    const datasets = reposArray.map((repoId, index) => {
+        const repo = allRepos.find(r => r.id === repoId);
+        const repoName = repo ? repo.name : repoId;
+
         return {
             label: repoName,
-            data: data.map(d => d.repos[repoName] ? d.repos[repoName][currentMetric] : null),
+            data: data.map(d => {
+                const reposList = Array.isArray(d.repos) ? d.repos : Object.values(d.repos || {});
+                const repoData = reposList.find(r => String(r.id) === String(repoId));
+                return repoData ? repoData[currentMetric] : null;
+            }),
             borderColor: COLORS[index % COLORS.length],
             backgroundColor: COLORS[index % COLORS.length] + '22',
             fill: false,
