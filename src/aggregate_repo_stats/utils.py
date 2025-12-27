@@ -87,3 +87,23 @@ def parse_parquet(obj) -> pd.DataFrame:
     """Reads parquet S3 object and returns table as pandas DataFrame"""
     body = obj["Body"].read()
     return pd.read_parquet(BytesIO(body))
+
+
+def get_latest_date_key(keys: list[str], suffix: str) -> str:
+    """Finds the key with the latest date for the suffix"""
+    latest = None
+    latest_key = None
+
+    for key in keys:
+        if not key.endswith(suffix):
+            continue
+
+        parts = key.split("/")
+        y, m, d = map(int, parts[1:4])
+        current = date(y, m, d)
+
+        if latest is None or current > latest:
+            latest = current
+            latest_key = key
+
+    return latest_key

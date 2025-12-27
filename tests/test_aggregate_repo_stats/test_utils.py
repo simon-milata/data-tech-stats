@@ -1,7 +1,8 @@
 from datetime import datetime
 
 from aggregate_repo_stats.utils import (
-    get_date_from_key, group_keys_by_interval, pick_latest_key_per_period
+    get_date_from_key, group_keys_by_interval, pick_latest_key_per_period,
+    get_latest_date_key
 )
 
 def test_get_date_from_key():
@@ -95,3 +96,21 @@ def test_pick_latest_key_per_month():
         "2025-01": "prefix/2025/01/14/object.json"
     }
     assert pick_latest_key_per_period(grouped_keys) == result
+
+
+def test_get_latest_date_key():
+    keys = [
+        "prefix/2025/01/01/data.json",
+        "prefix/2025/01/02/data.json",
+        "prefix/2025/01/03/other.json"
+    ]
+    assert get_latest_date_key(keys, "data.json") == "prefix/2025/01/02/data.json"
+
+
+def test_get_latest_date_key_mixed_dates():
+    keys = [
+        "prefix/2023/12/31/data.json",
+        "prefix/2024/01/01/data.json",
+        "prefix/2022/01/01/data.json"
+    ]
+    assert get_latest_date_key(keys, "data.json") == "prefix/2024/01/01/data.json"

@@ -1,28 +1,22 @@
 import json
 
-from .utils import get_object, save_data_to_s3
+import pandas as pd
+
+from .utils import get_latest_date_key, get_object, parse_parquet, save_data_to_s3
 
 
-def get_repo_registry(s3_client, bucket, path):
-    obj = get_object(s3_client, bucket, path)
-    return json.load(obj["Body"])
+COLUMNS_TO_KEEP = ["id", "name", "stars"]
 
-
-def get_max_last_seen(repo_registry: dict[str, dict[str, str]]) -> str:
-    """Get the highest last seen"""
-    return max(item["last_seen"] for item in repo_registry.values())
-
-
-def get_repo_list(repo_registry: dict[str, dict[str, str]]) -> list[tuple[str, str]]:
+def get_repo_list(s3_client, bucket, keys: list[str]) -> list[dict[str, str | int]]:
     """Builds a list of tuples of repo names and IDs where last seen is the highest last seen"""
-    highest_last_seen = get_max_last_seen(repo_registry)
+    latest_repos_key = get_latest_date_key(keys, "repos.parquet")
+    repo_obj = get_object(s3_client, bucket, latest_repos_key)
+    data = parse_parquet(repo_obj)
 
-    repo_list = []
-    for repo_id, repo_values in repo_registry.items():
-        if repo_values["last_seen"] != highest_last_seen:
-            continue
-        repo_list.append({"id": repo_id, "name": repo_values["name"]})
-    return repo_list
+    df = pd.DataFrame(data)
+    df = df[COLUMNS_TO_KEEP]
+    
+    return df.to_dict(orient="records")
 
 
 def save_repo_list(s3_client, aws_config, data):
