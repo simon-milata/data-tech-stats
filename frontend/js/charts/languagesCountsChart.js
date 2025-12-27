@@ -1,4 +1,5 @@
 import { getLanguagesTimeseries } from '../api.js';
+import { formatWeekLabel, renderLegend, externalTooltip } from './chartUtils.js';
 
 let langChartInstance = null;
 let allLanguagesWithCounts = [];
@@ -9,43 +10,6 @@ const colors = [
     '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444',
     '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
 ];
-
-function isoWeekToDate(isoWeek) {
-    const m = isoWeek.match(/(\d{4})-W(\d{2})/);
-    if (!m) return new Date(isoWeek);
-    const year = Number(m[1]);
-    const week = Number(m[2]);
-    const jan4 = new Date(year, 0, 4);
-    const day = jan4.getDay() || 7;
-    const week1Monday = new Date(jan4);
-    week1Monday.setDate(jan4.getDate() - (day - 1));
-    const monday = new Date(week1Monday);
-    monday.setDate(week1Monday.getDate() + (week - 1) * 7);
-    return monday;
-}
-
-function formatWeekLabel(dateStr, range = 'weekly') {
-    const optsDay = { month: 'short', day: 'numeric' };
-    const optsMonthYear = { month: 'short', year: 'numeric' };
-
-    if (range === 'weekly') {
-        const m = (dateStr || '').match(/(\d{4})-W(\d{2})/);
-        if (m) {
-            const start = isoWeekToDate(dateStr);
-            const end = new Date(start);
-            end.setDate(start.getDate() + 6);
-
-            const s = start.toLocaleDateString(undefined, optsDay);
-            const e = end.toLocaleDateString(undefined, optsDay);
-            return `${s} - ${e}, ${end.getFullYear()}`;
-        }
-        const d = new Date(dateStr);
-        return isNaN(d) ? String(dateStr) : d.toLocaleDateString(undefined, optsDay);
-    }
-
-    const d = (String(dateStr).match(/(\d{4})-W(\d{2})/)) ? isoWeekToDate(dateStr) : new Date(dateStr);
-    return isNaN(d) ? String(dateStr) : d.toLocaleDateString(undefined, optsMonthYear);
-}
 
 function getSelectedLanguages() {
     const items = document.querySelectorAll('.language-selector-item.selected');
@@ -174,7 +138,7 @@ function updateLanguagesChart() {
 
     langChartInstance.data.datasets = newDatasets;
     langChartInstance.update();
-    renderLegend(langChartInstance);
+    renderLegend(langChartInstance, document.getElementById('languagesLegend'));
 }
 
 export async function renderLanguagesCountsChart(range = 'weekly') {
@@ -251,136 +215,11 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
         langChartInstance.data.datasets = datasets;
         langChartInstance.update();
         renderSelector();
-        renderLegend(langChartInstance);
+        renderLegend(langChartInstance, document.getElementById('languagesLegend'));
         return;
     }
 
     langChartInstance = new Chart(ctx, config);
     renderSelector();
-    renderLegend(langChartInstance);
-}
-
-function renderLegend(chart) {
-    const container = document.getElementById('languagesLegend');
-    if (!container) return;
-    container.innerHTML = '';
-    chart.data.datasets.forEach((ds, i) => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = chart.isDatasetVisible(i) ? 'legend-chip active' : 'legend-chip';
-        chip.dataset.index = i;
-        chip.style.borderLeft = `8px solid ${ds.borderColor}`;
-        chip.textContent = ds.label;
-        chip.addEventListener('click', () => {
-            const currentlyVisible = chart.isDatasetVisible(i);
-            chart.setDatasetVisibility(i, !currentlyVisible);
-            chip.classList.toggle('active', !currentlyVisible);
-            chart.update();
-        });
-        container.appendChild(chip);
-    });
-}
-
-function externalTooltip(context) {
-    const { chart, tooltip } = context;
-    const parent = chart.canvas.parentNode;
-    let tip = parent.querySelector('.chart-tooltip');
-    if (!tip) {
-        tip = document.createElement('div');
-        tip.className = 'chart-tooltip';
-        tip.innerHTML = '<div class="label"></div><div class="values"></div>';
-        parent.appendChild(tip);
-    }
-
-    if (tooltip.opacity === 0) {
-        tip.style.opacity = 0;
-        return;
-    }
-
-    const title = tooltip.title && tooltip.title.length ? tooltip.title[0] : '';
-    tip.querySelector('.label').textContent = title;
-
-    const valuesEl = tip.querySelector('.values');
-    valuesEl.innerHTML = '';
-
-    if (tooltip.dataPoints && tooltip.dataPoints.length) {
-        tooltip.dataPoints.forEach(dp => {
-            const name = dp.dataset.label || '';
-            const v = dp.parsed && (typeof dp.parsed.y !== 'undefined') ? dp.parsed.y : (dp.raw || '');
-            const color = (dp.dataset && (dp.dataset.borderColor || dp.dataset.backgroundColor)) || '#000';
-
-            const row = document.createElement('div');
-            row.className = 'tt-line';
-            row.innerHTML = `
-                <span class="tt-dot" style="background:${color};"></span>
-                <span class="tt-name">${name}</span>
-                <span class="tt-val">${Number(v).toLocaleString()}</span>
-            `;
-            valuesEl.appendChild(row);
-        });
-    }
-
-    const canvasRect = chart.canvas.getBoundingClientRect();
-    const parentRect = parent.getBoundingClientRect();
-    const caretX = tooltip.caretX ?? (canvasRect.width / 2);
-    const caretY = tooltip.caretY ?? (canvasRect.height / 2);
-
-    const left = caretX + (canvasRect.left - parentRect.left);
-    const top = caretY + (canvasRect.top - parentRect.top);
-
-    tip.style.opacity = 0;
-    tip.style.display = 'block';
-    tip.style.left = '0px';
-    tip.style.top = '0px';
-    tip.style.transform = 'translate(0,0)';
-
-    const tipWidth = tip.offsetWidth || 150;
-    const tipHeight = tip.offsetHeight || 60;
-
-    const spaceRight = parentRect.width - left;
-    const spaceLeft = left;
-
-    let finalLeft, finalTop, transform;
-    const margin = 12;
-
-    if (top - tipHeight - margin >= 0) {
-        finalTop = top - margin;
-        const centerMin = parentRect.width * 0.35;
-        const centerMax = parentRect.width * 0.65;
-        if (left > centerMin && left < centerMax) {
-            if (spaceRight > tipWidth + 20) {
-                finalLeft = left + 20;
-                transform = 'translate(0, -100%)';
-            } else if (spaceLeft > tipWidth + 20) {
-                finalLeft = left - tipWidth - 20;
-                transform = 'translate(0, -100%)';
-            } else {
-                finalLeft = left;
-                transform = 'translate(-50%, -100%)';
-            }
-        } else {
-            finalLeft = left;
-            transform = 'translate(-50%, -100%)';
-        }
-    } else {
-        finalTop = top + margin;
-        if (spaceRight > tipWidth + 20) {
-            finalLeft = left + 20;
-            transform = 'translate(0, 0)';
-        } else if (spaceLeft > tipWidth + 20) {
-            finalLeft = left - tipWidth - 20;
-            transform = 'translate(0, 0)';
-        } else {
-            finalLeft = left;
-            transform = 'translate(-50%, 0)';
-        }
-    }
-
-    finalLeft = Math.min(Math.max(finalLeft, 8), parentRect.width - tipWidth - 8);
-    finalTop = Math.min(Math.max(finalTop, 8), parentRect.height - tipHeight - 8);
-
-    tip.style.left = finalLeft + 'px';
-    tip.style.top = finalTop + 'px';
-    tip.style.transform = transform;
-    tip.style.opacity = 1;
+    renderLegend(langChartInstance, document.getElementById('languagesLegend'));
 }

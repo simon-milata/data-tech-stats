@@ -1,4 +1,4 @@
-import { renderMultiLinesChart } from './charts/components/multiLinesChart.js';
+import { renderRepoCountsChart } from './charts/repoCountsChart.js';
 import { renderLanguagesCountsChart } from './charts/languagesCountsChart.js';
 import { initRepoComparisonChart } from './charts/repoComparisonChart.js';
 
@@ -26,7 +26,7 @@ cards.forEach((card) => {
 
             try {
                 if (cardType === 'repos') {
-                    renderMultiLinesChart(null, null, ranges.repos);
+                    renderRepoCountsChart(null, null, ranges.repos);
                 } else {
                     renderLanguagesCountsChart(ranges.languages);
                 }
@@ -38,7 +38,7 @@ cards.forEach((card) => {
 });
 
 try {
-    renderMultiLinesChart(null, null, ranges.repos);
+    renderRepoCountsChart(null, null, ranges.repos);
     renderLanguagesCountsChart(ranges.languages);
     initRepoComparisonChart();
 } catch (e) {
