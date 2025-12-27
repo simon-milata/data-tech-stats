@@ -32,8 +32,13 @@ export async function initRepoComparisonChart() {
 
     try {
         const repos = await getRepoList();
-        // Sort repos alphabetically
-        allRepos = repos.sort((a, b) => a.name.localeCompare(b.name));
+        // Sort repos by stars (descending)
+        allRepos = repos.sort((a, b) => {
+            const starDiff = (b.stars || 0) - (a.stars || 0);
+            if (starDiff !== 0) return starDiff;
+            // Secondary sort by ID to handle duplicate names/stars consistently
+            return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+        });
         
         setupSelectionUI();
 
