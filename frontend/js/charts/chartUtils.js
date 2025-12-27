@@ -107,6 +107,7 @@ export function externalTooltip(context) {
     const left = caretX + (canvasRect.left - parentRect.left);
     const top = caretY + (canvasRect.top - parentRect.top);
 
+    // Reset styles to measure size
     tip.style.opacity = 0;
     tip.style.display = 'block';
     tip.style.left = '0px';
@@ -115,37 +116,56 @@ export function externalTooltip(context) {
 
     const tipWidth = tip.offsetWidth || 150;
     const tipHeight = tip.offsetHeight || 60;
+    
+    const Y_OFFSET_ABOVE = 20; // Distance to place tooltip above the point
+    const Y_OFFSET_BELOW = 15; // Distance to place tooltip below the point
+    const PADDING = 8; // Padding from the container edges
 
-    const spaceRight = parentRect.width - left;
-    const spaceLeft = left;
+    // --- Y POSITIONING ---
+    // Default position is above the caret
+    let tooltipY = top - tipHeight - Y_OFFSET_ABOVE;
 
-    // Calculate absolute coordinates (no transforms)
-    let tooltipX = left - tipWidth / 2; // Default center
-    let tooltipY = top - tipHeight - 12; // Default above
-
-    // Y positioning
-    if (top - tipHeight - 12 < 0) {
-        tooltipY = top + 12; // Place below
+    // If it goes off the top, place it below the caret instead
+    if (tooltipY < PADDING) {
+        tooltipY = top + Y_OFFSET_BELOW;
     }
 
-    // X positioning: try side placement if in center band
+    // --- X POSITIONING ---
+    // Default position is centered on the caret
+    let tooltipX = left - tipWidth / 2;
+
+    // A more advanced X positioning to avoid the center of the chart
     const centerMin = parentRect.width * 0.35;
     const centerMax = parentRect.width * 0.65;
-    
     if (left > centerMin && left < centerMax) {
+        // If we are in the middle of the chart, try to place the tooltip to the side
+        const spaceRight = parentRect.width - left;
+        const spaceLeft = left;
         if (spaceRight > tipWidth + 20) {
-            tooltipX = left + 20;
+            tooltipX = left + 20; // Place to the right
         } else if (spaceLeft > tipWidth + 20) {
-            tooltipX = left - tipWidth - 20;
+            tooltipX = left - tipWidth - 20; // Place to the left
         }
     }
 
-    // Clamp to container
-    if (tooltipX < 8) tooltipX = 8;
-    if (tooltipX + tipWidth > parentRect.width - 8) {
-        tooltipX = parentRect.width - tipWidth - 8;
+    // --- CLAMPING to parent container ---
+    // Clamp X
+    if (tooltipX < PADDING) {
+        tooltipX = PADDING;
+    }
+    if (tooltipX + tipWidth > parentRect.width - PADDING) {
+        tooltipX = parentRect.width - tipWidth - PADDING;
+    }
+    
+    // Clamp Y
+    if (tooltipY < PADDING) {
+        tooltipY = PADDING;
+    }
+    if (tooltipY + tipHeight > parentRect.height - PADDING) {
+        tooltipY = parentRect.height - tipHeight - PADDING;
     }
 
+    // Set final position and fade in
     tip.style.left = tooltipX + 'px';
     tip.style.top = tooltipY + 'px';
     tip.style.transform = 'none';
