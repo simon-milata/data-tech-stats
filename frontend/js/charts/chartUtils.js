@@ -83,7 +83,13 @@ export function externalTooltip(context) {
     valuesEl.innerHTML = '';
 
     if (tooltip.dataPoints && tooltip.dataPoints.length) {
-        tooltip.dataPoints.forEach(dp => {
+        const sortedPoints = tooltip.dataPoints.slice().sort((a, b) => {
+            const valA = a.parsed && (typeof a.parsed.y !== 'undefined') ? a.parsed.y : (a.raw || 0);
+            const valB = b.parsed && (typeof b.parsed.y !== 'undefined') ? b.parsed.y : (b.raw || 0);
+            return valB - valA;
+        });
+
+        sortedPoints.forEach(dp => {
             const name = dp.dataset.label || '';
             const v = dp.parsed && (typeof dp.parsed.y !== 'undefined') ? dp.parsed.y : (dp.raw || '');
             const color = (dp.dataset && (dp.dataset.borderColor || dp.dataset.backgroundColor)) || '#000';
