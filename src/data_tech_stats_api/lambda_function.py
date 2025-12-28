@@ -69,7 +69,7 @@ def get_repo_comparison_data(repos: Annotated[list[str], Query()], interval: Lit
     grouped_keys = group_keys_by_period(repos_keys, period)
     top_keys = pick_latest_key_per_period(grouped_keys)
 
-    columns_to_keep = ["id", "name", "stars", "watchers", "forks", "open_issues"]
+    columns_to_keep = ["id", "name", "stars", "size", "forks", "open_issues"]
     historical_data = get_repo_comparison_dict(top_keys, s3_client, aws_config, columns_to_keep, repos)
     content = format_repo_comparison_response(historical_data)
 

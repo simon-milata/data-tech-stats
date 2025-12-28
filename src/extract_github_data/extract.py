@@ -31,7 +31,6 @@ def parse_repo_data(data: list[dict], topic_queried: str) -> list[dict]:
                 "languages_url": item["languages_url"],
                 "size": item["size"],
                 "stars": item["stargazers_count"],
-                "watchers": item["watchers_count"],
                 "main_language": item["language"],
                 "forks": item["forks_count"],
                 "license": repo_license.get("spdx_id", None) if repo_license else "",

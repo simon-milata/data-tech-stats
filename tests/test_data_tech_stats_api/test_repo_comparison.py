@@ -8,7 +8,7 @@ def test_create_metrics_dict():
         "id": [123, 456],
         "name": ["repo-1", "repo-2"],
         "stars": [100, 200],
-        "watchers": [10, 20],
+        "size": [1000, 1000],
         "forks": [5, 8],
         "open_issues": [1, 0]
     })
@@ -16,8 +16,8 @@ def test_create_metrics_dict():
     result = create_metrics_dict(df)
 
     assert result == [
-        {"id": 123, "name": "repo-1", "stars": 100, "watchers": 10, "forks": 5, "open_issues": 1},
-        {"id": 456,"name": "repo-2", "stars": 200, "watchers": 20, "forks": 8, "open_issues": 0}
+        {"id": 123, "name": "repo-1", "stars": 100, "size": 1000, "forks": 5, "open_issues": 1},
+        {"id": 456,"name": "repo-2", "stars": 200, "size": 1000, "forks": 8, "open_issues": 0}
     ]
 
 
