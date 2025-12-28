@@ -206,7 +206,7 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
                 legend: { display: false },
                 tooltip: { enabled: false, external: externalTooltip }
             },
-            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            interaction: { mode: 'index', axis: 'x', intersect: false }
         }
     };
 

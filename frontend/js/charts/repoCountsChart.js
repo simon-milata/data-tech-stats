@@ -64,7 +64,7 @@ export async function renderRepoCountsChart(selectedTopics = null, onSummary, ra
                 legend: { display: false },
                 tooltip: { enabled: false, external: externalTooltip }
             },
-            interaction: { mode: 'nearest', axis: 'x', intersect: false }
+            interaction: { mode: 'index', axis: 'x', intersect: false }
         }
     };
 
