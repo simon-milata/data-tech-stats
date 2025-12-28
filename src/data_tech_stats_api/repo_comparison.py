@@ -1,27 +1,18 @@
 import pandas as pd
+from typing import Any
 
 from .utils import get_object, parse_parquet
 
 
-def create_metrics_dict(df: pd.DataFrame) -> dict[str, dict[str, int]]:
+def create_metrics_dict(df: pd.DataFrame) -> list[dict[str, Any]]:
     """Creates a dictionary of metrics for each repository."""
-    period_entry = {}
-
-    for _, row in df.iterrows():
-        repo_name = row["name"]
-        metrics = {
-            "stars": row["stars"],
-            "watchers": row["watchers"],
-            "forks": row["forks"],
-            "open_issues": row["open_issues"]
-        }
-        period_entry[repo_name] = metrics
+    period_entry = df.to_dict(orient="records")
     return period_entry
 
 
 def get_repo_comparison_dict(
         top_keys: dict[str, str], s3_client, aws_config, columns_to_keep: list[str], repos: list[str]
-    ) -> dict[str, dict[str, int]]:
+    ) -> dict[str, list[dict[str, Any]]]:
     """
     Fetches data from S3, keeps repos from repos list, and creates metrics dict with all repo metrics 
     for each period.
@@ -33,7 +24,8 @@ def get_repo_comparison_dict(
         df = parse_parquet(obj)
 
         df = df[columns_to_keep].copy()
-        df = df[df["name"].isin(repos)]
+        df["id"] = df["id"].astype("str")
+        df = df[df["id"].isin(repos)]
 
         period_entry = create_metrics_dict(df)
     
