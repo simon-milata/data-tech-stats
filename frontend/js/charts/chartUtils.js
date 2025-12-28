@@ -123,9 +123,10 @@ export function externalTooltip(context) {
     const tipWidth = tip.offsetWidth || 150;
     const tipHeight = tip.offsetHeight || 60;
     
-    const Y_OFFSET_ABOVE = 20; // Distance to place tooltip above the point
+    const Y_OFFSET_ABOVE = 40; // Distance to place tooltip above the point
     const Y_OFFSET_BELOW = 15; // Distance to place tooltip below the point
     const PADDING = 8; // Padding from the container edges
+    const PADDING_BOTTOM = 35; // Extra padding at bottom to avoid X-axis labels
 
     // --- Y POSITIONING ---
     // Default position is above the caret
@@ -137,21 +138,15 @@ export function externalTooltip(context) {
     }
 
     // --- X POSITIONING ---
-    // Default position is centered on the caret
-    let tooltipX = left - tipWidth / 2;
-
-    // A more advanced X positioning to avoid the center of the chart
-    const centerMin = parentRect.width * 0.35;
-    const centerMax = parentRect.width * 0.65;
-    if (left > centerMin && left < centerMax) {
-        // If we are in the middle of the chart, try to place the tooltip to the side
-        const spaceRight = parentRect.width - left;
-        const spaceLeft = left;
-        if (spaceRight > tipWidth + 20) {
-            tooltipX = left + 20; // Place to the right
-        } else if (spaceLeft > tipWidth + 20) {
-            tooltipX = left - tipWidth - 20; // Place to the left
-        }
+    // Always place to the side to avoid covering points
+    const X_OFFSET = 20;
+    const spaceRight = parentRect.width - left;
+    let tooltipX;
+    
+    if (spaceRight > tipWidth + X_OFFSET) {
+        tooltipX = left + X_OFFSET;
+    } else {
+        tooltipX = left - tipWidth - X_OFFSET;
     }
 
     // --- CLAMPING to parent container ---
@@ -167,8 +162,8 @@ export function externalTooltip(context) {
     if (tooltipY < PADDING) {
         tooltipY = PADDING;
     }
-    if (tooltipY + tipHeight > parentRect.height - PADDING) {
-        tooltipY = parentRect.height - tipHeight - PADDING;
+    if (tooltipY + tipHeight > parentRect.height - PADDING_BOTTOM) {
+        tooltipY = parentRect.height - tipHeight - PADDING_BOTTOM;
     }
 
     // Set final position and fade in
