@@ -19,6 +19,7 @@ let chart = null;
 let latestUpdateId = 0;
 let searchTerm = '';
 let selectedContainer = null;
+let tooltipEl = null;
 
 const repoListContainer = document.getElementById('repoListContainer');
 const repoSearch = document.getElementById('repoSearch');
@@ -132,6 +133,9 @@ function renderOptions() {
             div.title = `Max ${MAX_SELECTION} repositories selected`;
         }
         div.textContent = repo.name;
+        div.addEventListener('mouseenter', (e) => showTooltip(e, repo));
+        div.addEventListener('mousemove', moveTooltip);
+        div.addEventListener('mouseleave', hideTooltip);
         if (!maxReached) {
             div.onclick = () => toggleRepo(repo.id);
         }
@@ -304,4 +308,31 @@ async function updateChart() {
         });
         renderLegend(chart, repoComparisonLegend);
     }
+}
+
+function createTooltip() {
+    if (tooltipEl) return;
+    tooltipEl = document.createElement('div');
+    tooltipEl.className = 'repo-list-tooltip';
+    document.body.appendChild(tooltipEl);
+}
+
+function showTooltip(e, repo) {
+    createTooltip();
+    tooltipEl.innerHTML = `
+        <div class="tt-row"><span class="tt-label">ID:</span> <span class="tt-val">${repo.id}</span></div>
+        <div class="tt-row"><span class="tt-label">Stars:</span> <span class="tt-val">${repo.stars ? repo.stars.toLocaleString() : 0}</span></div>
+    `;
+    tooltipEl.style.display = 'block';
+    moveTooltip(e);
+}
+
+function moveTooltip(e) {
+    if (!tooltipEl) return;
+    tooltipEl.style.left = (e.clientX + 12) + 'px';
+    tooltipEl.style.top = (e.clientY + 12) + 'px';
+}
+
+function hideTooltip() {
+    if (tooltipEl) tooltipEl.style.display = 'none';
 }
