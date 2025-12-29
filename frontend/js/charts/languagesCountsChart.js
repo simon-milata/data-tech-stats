@@ -98,7 +98,7 @@ function renderSelector() {
 function updateToggleText(popup) {
     const toggle = popup.parentElement.querySelector('.language-selector-toggle');
     const count = popup.querySelectorAll('.language-selector-item.selected').length;
-    toggle.textContent = count > 0 ? `Languages (${count})` : 'Select Languages';
+    toggle.innerHTML = count > 0 ? `Languages <span class="toggle-count">(${count})</span>` : 'Select Languages';
 }
 
 function updateLimitMessage(popup) {

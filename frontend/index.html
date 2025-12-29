@@ -39,11 +39,11 @@
                 <div class="card-top">
                     <h2>Main Languages of Repositories</h2>
                     <div class="controls">
+                        <div id="languageSelectorContainer"></div>
                         <div class="range-switcher" role="tablist" aria-label="Range selector">
                             <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
                             <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
                         </div>
-                        <div id="languageSelectorContainer"></div>
                     </div>
                 </div>
                 <div class="chart-wrap">
@@ -84,5 +84,35 @@
     </main>
 
     <script type="module" src="js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('languageSelectorContainer');
+            if (!container) return;
+
+            const updateDisabledState = () => {
+                const items = container.querySelectorAll('.language-selector-item');
+                const selectedCount = container.querySelectorAll('.language-selector-item.selected').length;
+                const MAX = 10;
+                items.forEach(item => {
+                    if (!item.classList.contains('selected')) {
+                        item.classList.toggle('disabled', selectedCount >= MAX);
+                    } else {
+                        item.classList.remove('disabled');
+                    }
+                });
+            };
+
+            container.addEventListener('click', (e) => {
+                const item = e.target.closest('.language-selector-item');
+                if (item && item.classList.contains('disabled')) {
+                    e.stopPropagation();
+                    return;
+                }
+                setTimeout(updateDisabledState, 0);
+            }, true);
+
+            new MutationObserver(updateDisabledState).observe(container, { childList: true, subtree: true });
+        });
+    </script>
 </body>
 </html>

@@ -218,16 +218,47 @@ body {
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 0.85rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #374151;
     cursor: pointer;
     transition: all 0.2s ease;
     font-family: inherit;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.language-selector-toggle::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+    margin-top: -3px;
+    opacity: 0.6;
 }
 
 .language-selector-toggle:hover {
     background: rgba(243, 244, 246, 0.8);
     border-color: rgba(15, 23, 42, 0.12);
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+}
+
+.toggle-count {
+    opacity: 0.5;
+    font-weight: 400;
+    font-size: 0.85em;
 }
 
 .language-selector-popup {
@@ -265,6 +296,15 @@ body {
     border-radius: 0%;
 }
 
+.language-selector-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.language-selector-item.disabled:hover {
+    background: transparent;
+}
+
 .language-selector-label {
     display: flex;
     gap: 6px;
@@ -282,7 +322,7 @@ body {
 .lang-count {
     font-size: 0.75rem;
     color: #9ca3af;
-    font-weight: 500;
+    font-weight: 400;
 }
 
 .language-selector-limit {
