@@ -29,6 +29,12 @@ body {
     padding: 18px 0 8px 0;
 }
 
+.site-header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .site-header h1 {
     margin: 0;
     font-size: 1.375rem;
@@ -624,4 +630,12 @@ body {
 }
 #repoListContainer::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
+}
+
+@media (max-width: 768px) {
+    .site-header .container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
 }

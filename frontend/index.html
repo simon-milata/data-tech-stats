@@ -12,8 +12,14 @@
 <body>
     <header class="site-header">
         <div class="container">
-            <h1>DataTechStats</h1>
-            <p class="subtitle">Insights into popular data repositories</p>
+            <div>
+                <h1>DataTechStats</h1>
+                <p class="subtitle">Insights into popular data repositories</p>
+            </div>
+            <div class="range-switcher global-switcher" role="tablist" aria-label="Global Range selector">
+                <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
+                <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
+            </div>
         </div>
     </header>
 
@@ -23,7 +29,7 @@
                 <div class="card-top">
                     <h2>Total Repositories by Topic</h2>
                     <div class="controls">
-                        <div class="range-switcher" role="tablist" aria-label="Range selector">
+                        <div class="range-switcher" role="tablist" aria-label="Range selector" style="display: none;">
                             <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
                             <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
                         </div>
@@ -40,7 +46,7 @@
                     <h2>Main Languages of Repositories</h2>
                     <div class="controls">
                         <div id="languageSelectorContainer"></div>
-                        <div class="range-switcher" role="tablist" aria-label="Range selector">
+                        <div class="range-switcher" role="tablist" aria-label="Range selector" style="display: none;">
                             <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
                             <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
                         </div>
@@ -57,7 +63,7 @@
                 <div class="card-top">
                     <h2>Repository Comparison</h2>
                     <div class="controls">
-                        <div class="range-switcher" id="compRangeSwitcher">
+                        <div class="range-switcher" id="compRangeSwitcher" style="display: none;">
                             <button class="range-btn active" data-range="weekly">Weekly</button>
                             <button class="range-btn" data-range="monthly">Monthly</button>
                         </div>
@@ -112,6 +118,21 @@
             }, true);
 
             new MutationObserver(updateDisabledState).observe(container, { childList: true, subtree: true });
+
+            // Global Range Switcher Logic
+            const globalButtons = document.querySelectorAll('.global-switcher .range-btn');
+            globalButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const range = btn.dataset.range;
+                    globalButtons.forEach(b => {
+                        const isActive = b.dataset.range === range;
+                        b.classList.toggle('active', isActive);
+                        b.setAttribute('aria-selected', isActive);
+                    });
+                    // Trigger hidden local switchers to update charts
+                    document.querySelectorAll(`.graph-card .range-switcher .range-btn[data-range="${range}"]`).forEach(b => b.click());
+                });
+            });
         });
     </script>
 </body>
