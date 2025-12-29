@@ -3,17 +3,14 @@ import { formatWeekLabel, renderLegend, externalTooltip } from './chartUtils.js'
 
 const MAX_SELECTION = 5;
 const COLORS = [
-    '#FF6384',
-    '#36A2EB',
-    '#FFCE56',
-    '#4BC0C0',
-    '#9966FF',
-    '#FF9F40'
+    '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444',
+    '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
 ];
 
 let allRepos = [];
 let selectedRepos = new Set();
 let currentMetric = 'stars';
+let currentView = 'historical';
 let currentRange = 'weekly';
 let chart = null;
 let latestUpdateId = 0;
@@ -24,6 +21,7 @@ let tooltipEl = null;
 const repoListContainer = document.getElementById('repoListContainer');
 const repoSearch = document.getElementById('repoSearch');
 const metricSwitcher = document.getElementById('metricSwitcher');
+const repoComparisonViewSwitcher = document.getElementById('compViewSwitcher');
 const repoComparisonRangeSwitcher = document.getElementById('compRangeSwitcher');
 const ctx = document.getElementById('repoComparisonChart') ? document.getElementById('repoComparisonChart').getContext('2d') : null;
 const repoComparisonLegend = document.getElementById('repoComparisonLegend');
@@ -47,6 +45,7 @@ export async function initRepoComparisonChart() {
         setupSearch();
         setupMetricSwitcher();
         setupRangeSwitcher();
+        setupViewSwitcher();
         moveMetricSwitcherToHeader();
         
         renderUI();
@@ -201,12 +200,35 @@ function setupRangeSwitcher() {
     });
 }
 
+function setupViewSwitcher() {
+    if (!repoComparisonViewSwitcher) return;
+    repoComparisonViewSwitcher.addEventListener('click', (e) => {
+        if (e.target.classList.contains('range-btn')) {
+            repoComparisonViewSwitcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            const newView = e.target.dataset.view;
+            if (currentView !== newView) {
+                currentView = newView;
+                updateControlsVisibility();
+                updateChart();
+            }
+        }
+    });
+}
+
+function updateControlsVisibility() {
+    const isComparison = currentView === 'comparison';
+    if (metricSwitcher) {
+        metricSwitcher.style.display = isComparison ? 'none' : 'inline-flex';
+    }
+}
+
 function moveMetricSwitcherToHeader() {
-    if (!metricSwitcher || !repoComparisonRangeSwitcher) return;
+    if (!metricSwitcher) return;
     
-    const headerContainer = repoComparisonRangeSwitcher.parentElement;
+    const headerContainer = document.querySelector('.graph-card[data-chart-type="comparison"] .controls');
     if (headerContainer) {
-        headerContainer.insertBefore(metricSwitcher, repoComparisonRangeSwitcher);
+        headerContainer.appendChild(metricSwitcher);
         metricSwitcher.style.marginBottom = '0';
         metricSwitcher.style.marginRight = '12px';
         metricSwitcher.style.display = 'inline-flex';
@@ -240,6 +262,94 @@ async function updateChart() {
     if (updateId !== latestUpdateId) return;
 
     if (!data || data.length === 0) return;
+
+    if (currentView === 'comparison') {
+        if (chart && chart.config.type !== 'bar') {
+            chart.destroy();
+            chart = null;
+        }
+
+        const latestData = data[data.length - 1];
+        const rDataList = Array.isArray(latestData.repos) ? latestData.repos : Object.values(latestData.repos);
+        const metrics = ['stars', 'size', 'forks', 'open_issues'];
+        const metricLabels = ['Stars', 'Size', 'Forks', 'Open Issues'];
+        
+        // Calculate max for normalization
+        const maxValues = {};
+        metrics.forEach(m => {
+            maxValues[m] = 0;
+            reposArray.forEach(repoId => {
+                const repo = rDataList.find(r => String(r.id) === String(repoId));
+                if (repo && repo[m] > maxValues[m]) {
+                    maxValues[m] = repo[m];
+                }
+            });
+            if (maxValues[m] === 0) maxValues[m] = 1;
+        });
+
+        const datasets = reposArray.map((repoId, index) => {
+            const repo = allRepos.find(r => r.id === repoId);
+            const repoName = repo ? repo.name : repoId;
+            const repoStats = rDataList.find(r => String(r.id) === String(repoId)) || {};
+
+            return {
+                label: repoName,
+                data: metrics.map(m => ((repoStats[m] || 0) / maxValues[m]) * 100),
+                originalData: metrics.map(m => repoStats[m] || 0),
+                backgroundColor: COLORS[index % COLORS.length],
+                borderColor: COLORS[index % COLORS.length],
+                borderRadius: 4,
+                barPercentage: 0.7,
+                categoryPercentage: 0.8
+            };
+        });
+
+        if (chart) {
+            chart.data.labels = metricLabels;
+            chart.data.datasets = datasets;
+            chart.update();
+        } else {
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: metricLabels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false, external: externalTooltip }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100,
+                            grid: { color: 'rgba(147,155,166,0.06)' },
+                            ticks: { 
+                                color: '#94a3b8',
+                                callback: function(value) { return value + '%'; } 
+                            },
+                            title: { display: true, text: '% of Max Value', color: '#94a3b8', font: { size: 11 } }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    },
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                }
+            });
+        }
+        renderLegend(chart, repoComparisonLegend);
+        return;
+    }
+
+    if (chart && chart.config.type !== 'line') {
+        chart.destroy();
+        chart = null;
+    }
 
     const labels = data.map(d => formatWeekLabel(d.date, currentRange));
     const datasets = reposArray.map((repoId, index) => {

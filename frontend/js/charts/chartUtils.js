@@ -91,7 +91,10 @@ export function externalTooltip(context) {
 
         sortedPoints.forEach(dp => {
             const name = dp.dataset.label || '';
-            const v = dp.parsed && (typeof dp.parsed.y !== 'undefined') ? dp.parsed.y : (dp.raw || '');
+            let v = dp.parsed && (typeof dp.parsed.y !== 'undefined') ? dp.parsed.y : (dp.raw || '');
+            if (dp.dataset.originalData && typeof dp.dataset.originalData[dp.dataIndex] !== 'undefined') {
+                v = dp.dataset.originalData[dp.dataIndex];
+            }
             const color = (dp.dataset && (dp.dataset.borderColor || dp.dataset.backgroundColor)) || '#000';
 
             const row = document.createElement('div');
