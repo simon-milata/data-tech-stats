@@ -11,6 +11,7 @@ class AWSConfig(BaseSettings):
     github_data_prefix: str = Field(validation_alias="GITHUB_DATA_PREFIX")
     aggregated_bucket: str = Field(validation_alias="AGGREGATED_DATA_OUTPUT_BUCKET")
     aggregated_data_path: str = Field(validation_alias="AGGREGATED_DATA_OUTPUT_PATH")
+    logging_level: str = "INFO"
 
     model_config = {
         "env_file": str(Path(__file__).parent / ".env"),

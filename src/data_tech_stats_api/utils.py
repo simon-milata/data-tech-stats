@@ -3,6 +3,9 @@ from datetime import datetime, date
 from typing import Any, Literal
 from io import BytesIO
 from collections import defaultdict
+import time
+import logging
+import functools
 
 import boto3
 import pandas as pd
@@ -78,3 +81,31 @@ def pick_latest_key_per_period(grouped_keys: dict[str, list[str]]) -> dict[str, 
         latest_key = max(value, key=get_date_from_key)
         latest_key_per_period[key] = latest_key
     return latest_key_per_period
+
+
+def setup_logging(logging_level) -> None:
+    """Setups up the logging level and format for the logger running."""
+    if running_on_lambda():
+        logging.getLogger().setLevel(logging_level)
+    else:
+        logging.basicConfig(
+            level=logging_level, datefmt="%H:%M:%S",
+            format="%(asctime)s - %(levelname)s - %(message)s"
+        )
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("boto3").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("botocore").setLevel(logging.WARNING)
+    logging.getLogger("s3transfer").setLevel(logging.WARNING)
+
+
+def timer(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        try:
+            return func(*args, **kwargs)
+        finally:
+            duration = time.perf_counter() - start
+            logging.debug(f"'{func.__name__}' took {duration:.2f}s")
+    return wrapper

@@ -9,7 +9,7 @@ from mangum import Mangum
 from .config import AWSConfig
 from .utils import (
     create_s3_client, running_on_lambda, get_object, get_objects, get_object_keys,
-    filter_object_keys, group_keys_by_period, pick_latest_key_per_period
+    filter_object_keys, group_keys_by_period, pick_latest_key_per_period, setup_logging, timer
 )
 from .repo_comparison import get_repo_comparison_dict, format_repo_comparison_response
 
@@ -17,6 +17,7 @@ from .repo_comparison import get_repo_comparison_dict, format_repo_comparison_re
 running_on_lambda = running_on_lambda()
 
 aws_config = AWSConfig()
+setup_logging(aws_config.logging_level)
 app = FastAPI()
 router = APIRouter(prefix="/data-tech-stats/api")
 
@@ -31,6 +32,7 @@ app.add_middleware(
 s3_client = create_s3_client(aws_config.profile, aws_config.region)
 
 @router.get("/repo-counts")
+@timer
 def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
     data_path = f"{aws_config.aggregated_data_path}/repo_counts/{interval}.json"
     obj = get_object(s3_client, aws_config.aggregated_bucket, data_path)
@@ -41,6 +43,7 @@ def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
 
 
 @router.get("/primary-languages")
+@timer
 def get_primary_languages(interval: Literal["weekly", "monthly"], response: Response):
     data_path = f"{aws_config.aggregated_data_path}/primary_langs_counts/{interval}.json"
     obj = get_object(s3_client, aws_config.aggregated_bucket, data_path)
@@ -51,6 +54,7 @@ def get_primary_languages(interval: Literal["weekly", "monthly"], response: Resp
 
 
 @router.get("/repo-list")
+@timer
 def get_repo_list(response: Response):
     repo_list_path = f"{aws_config.aggregated_data_path}/repo_list/repo_list.json"
     repo_list_obj = get_object(s3_client, aws_config.aggregated_bucket, repo_list_path)
@@ -60,6 +64,7 @@ def get_repo_list(response: Response):
 
 
 @router.get("/repo-comparison")
+@timer
 def get_repo_comparison_data(repos: Annotated[list[str], Query()], interval: Literal["weekly", "monthly"], response: Response):
     objects = get_objects(s3_client, aws_config.github_data_bucket, aws_config.github_data_prefix)
     keys = get_object_keys(objects)
