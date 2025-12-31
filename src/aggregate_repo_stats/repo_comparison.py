@@ -1,5 +1,6 @@
 import pandas as pd
 
+from .utils import save_data_to_s3
 from .types import RepoComparisonAggData, RepoComparisonHistoryRecord, RepoId
 
 
@@ -24,3 +25,8 @@ def get_repo_comparison_data(repo_comparison_agg_data: RepoComparisonAggData, df
             "open_issues": row.open_issues
         }
         append_to_repo_history(repo_comparison_agg_data, repo_id, repo_name, record)
+
+
+def save_agg_repo_comparison_data(s3_client, aws_config, interval, data):
+    output_path = f"{aws_config.data_output_path}/repo_comparison/{interval}.json"
+    save_data_to_s3(s3_client, aws_config.data_output_bucket, output_path, data)
