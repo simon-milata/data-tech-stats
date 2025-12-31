@@ -1,4 +1,4 @@
-from .config import AWSConfig
+from .config import Settings
 from .utils import (
     create_s3_client, running_on_lambda, get_all_objects, get_object_keys, filter_object_keys
 )
@@ -8,25 +8,25 @@ from .process_repos import process_repos_data
 
 running_on_lambda = running_on_lambda()
 
-aws_config = AWSConfig()
+settings = Settings()
 
 
 def lambda_handler(event, context):
-    s3_client = create_s3_client(aws_config.profile, aws_config.region)
+    s3_client = create_s3_client(settings.profile, settings.region)
 
-    objects = get_all_objects(s3_client, aws_config.github_data_bucket, aws_config.github_data_prefix)
+    objects = get_all_objects(s3_client, settings.bucket, settings.github_data_prefix)
     keys = get_object_keys(objects)
 
-    repo_list = get_repo_list(s3_client, aws_config.github_data_bucket, keys)
-    save_repo_list(s3_client, aws_config, repo_list)
+    repo_list = get_repo_list(s3_client, settings.bucket, keys)
+    save_repo_list(s3_client, settings, repo_list)
 
     intervals = ["weekly", "monthly"]
     for interval in intervals:
         repo_count_keys = filter_object_keys(keys, "repo_counts.json")
-        repo_counts_data = aggregate_repo_counts(s3_client, repo_count_keys, interval, aws_config)
-        save_agg_repo_counts(s3_client, aws_config, interval, repo_counts_data)
+        repo_counts_data = aggregate_repo_counts(s3_client, repo_count_keys, interval, settings)
+        save_agg_repo_counts(s3_client, settings, interval, repo_counts_data)
 
-        process_repos_data(s3_client, aws_config, keys, interval)
+        process_repos_data(s3_client, settings, keys, interval)
 
 
 if __name__ == "__main__":

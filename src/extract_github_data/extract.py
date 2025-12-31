@@ -5,7 +5,6 @@ from collections import defaultdict
 from urllib import parse
 
 from .utils import running_on_lambda, make_get_request, get_scaled_delay
-from .config import settings
 
 if not running_on_lambda():
     from dotenv import load_dotenv
@@ -13,11 +12,12 @@ if not running_on_lambda():
     load_dotenv()
     
 
-headers = {
-    "User-Agent": "data-tech-stats",
-    "Accept": "application/json",
-    "Authorization": f"Bearer {settings.github_api_token}"
-}
+def get_headers(token: str) -> dict:
+    return {
+        "User-Agent": "data-tech-stats",
+        "Accept": "application/json",
+        "Authorization": f"Bearer {token}"
+    }
 
 def parse_repo_data(data: list[dict], topic_queried: str) -> list[dict]:
     """Parses repo data and keeps and renames specific keys."""
@@ -42,30 +42,30 @@ def parse_repo_data(data: list[dict], topic_queried: str) -> list[dict]:
     return parsed_data
 
 
-def get_repos_from_page(topic: str, page: int) -> dict:
+def get_repos_from_page(topic: str, page: int, settings) -> dict:
     """Builds an API url and makes a request. Returns the data from the API as a dict."""
     params = f"repositories?q=topic:{topic}&page={page}&sort=stars&per_page={settings.results_per_page}"
     url = parse.urljoin(base="https://api.github.com/search/", url=params)
     logging.debug(f"Getting data from '{url}'.")
     
-    response = make_get_request(url=url, headers=headers)
+    response = make_get_request(url=url, headers=get_headers(settings.github_api_token))
         
     return response.json()
 
 
-def get_languages(languages_url: str) -> dict[str, int]:
+def get_languages(languages_url: str, settings) -> dict[str, int]:
     """Fetches languages data from the repo languages API and returns the result as a dict."""
     logging.debug(f"Fetching languages from '{languages_url}'.")
-    response = make_get_request(url=languages_url, headers=headers)
+    response = make_get_request(url=languages_url, headers=get_headers(settings.github_api_token))
 
     return response.json()
 
 
-def fetch_repos_per_topic(topic: str) -> tuple[list[dict], int]:
+def fetch_repos_per_topic(topic: str, settings) -> tuple[list[dict], int]:
     """Fetches total repo counts and repo data for all pages for a topic"""
     topic_repo_data = []
     for page in range(1, settings.pages_per_topic+1):
-        repos_page_data = get_repos_from_page(topic, page)
+        repos_page_data = get_repos_from_page(topic, page, settings)
 
         parsed_page_data = parse_repo_data(repos_page_data["items"], topic)
         topic_repo_data.extend(parsed_page_data)
@@ -80,7 +80,7 @@ def fetch_repos_per_topic(topic: str) -> tuple[list[dict], int]:
     return topic_repo_data, repo_counts
 
 
-def fetch_language_data(repo_data: list[dict]) -> list[dict]:
+def fetch_language_data(repo_data: list[dict], settings) -> list[dict]:
     """Fetches language data for each repo on the first page of repos for each topic"""
     total = len(repo_data)
     processed = 0
@@ -88,7 +88,7 @@ def fetch_language_data(repo_data: list[dict]) -> list[dict]:
 
     language_data = []
     for repo in repo_data:
-        repo_languages = get_languages(repo["languages_url"])
+        repo_languages = get_languages(repo["languages_url"], settings)
         language_data.append({
             "repo_id": repo["id"], 
             "repo_name": repo["name"], 
@@ -123,22 +123,22 @@ def keep_n_repos_per_topic(repo_data: list[dict], n: int = 50) -> list[dict]:
     return n_repos
 
 
-def get_languages_data(repo_data: list[dict]) -> list[dict]:
+def get_languages_data(repo_data: list[dict], settings) -> list[dict]:
     """Gets deduplicated languages data for the first {languages_per_topic} repos for each topic."""
     language_repos = keep_n_repos_per_topic(repo_data, settings.languages_per_topic)
     
     # Deduplicate languages after getting first N to avoid skewed data
     language_repos = deduplicate_repo_data(language_repos)
-    language_data = fetch_language_data(language_repos)
+    language_data = fetch_language_data(language_repos, settings)
     return language_data
 
 
-def get_all_repos_data(topics: list[str]) -> tuple[list[dict], dict, list[dict]]:
+def get_all_repos_data(topics: list[str], settings) -> tuple[list[dict], dict, list[dict]]:
     """Gets total repo counts and repo data per topic from all pages."""
     repo_counts = {}
     repos_data = []
     for topic in topics:
-        topic_repo_data, topic_repo_counts = fetch_repos_per_topic(topic)
+        topic_repo_data, topic_repo_counts = fetch_repos_per_topic(topic, settings)
         repos_data.extend(topic_repo_data)
         repo_counts[topic] = topic_repo_counts
         
