@@ -1,11 +1,14 @@
 from .config import AWSConfig
 from .utils import (
     create_s3_client, running_on_lambda, get_all_objects, get_object_keys, filter_object_keys, 
-    get_latest_date_key, get_object
+    group_keys_by_interval, pick_latest_key_per_period, get_date_from_key, get_object, parse_parquet,
+    save_data_to_s3
 )
 from .repo_counts import aggregate_repo_counts, save_agg_repo_counts
-from .primary_languages import aggregate_primary_languages, save_agg_primary_lang_counts
+from .primary_languages import get_primary_lang_counts, save_agg_primary_lang_counts
 from .repo_list import get_repo_list, save_repo_list
+from .repo_comparison import get_repo_comparison_data
+from .types import RepoComparisonAggData
 
 running_on_lambda = running_on_lambda()
 
@@ -28,8 +31,27 @@ def lambda_handler(event, context):
         save_agg_repo_counts(s3_client, aws_config, interval, repo_counts_data)
 
         repos_keys = filter_object_keys(keys, "repos.parquet")
-        primary_langs_agg_data = aggregate_primary_languages(s3_client, repos_keys, interval, aws_config)
+        grouped_repos_keys = group_keys_by_interval(repos_keys, interval)
+        top_repos_keys = pick_latest_key_per_period(grouped_repos_keys)
+
+
+        primary_langs_agg_data = []
+        repo_comparison_agg_data: RepoComparisonAggData = {}
+        for key, value in top_repos_keys.items():
+            date = key
+
+            obj = get_object(s3_client, aws_config.github_data_bucket, value)
+            repos_df = parse_parquet(obj)
+
+            get_repo_comparison_data(repo_comparison_agg_data, repos_df, date)
+
+            primary_langs_agg_data.append({"date": date, "counts": get_primary_lang_counts(repos_df)})
+
+        
         save_agg_primary_lang_counts(s3_client, aws_config, interval, primary_langs_agg_data)
+
+        repo_comparison_path = f"aggregated_data/repo_comparison/{interval}.json"
+        save_data_to_s3(s3_client, aws_config.github_data_bucket, repo_comparison_path, repo_comparison_agg_data)
 
 
 if __name__ == "__main__":

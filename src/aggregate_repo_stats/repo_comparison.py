@@ -1,0 +1,26 @@
+import pandas as pd
+
+from .types import RepoComparisonAggData, RepoComparisonHistoryRecord, RepoId
+
+
+def append_to_repo_history(repo_comparison_agg_data: RepoComparisonAggData, repo_id: RepoId, repo_name: str, record: RepoComparisonHistoryRecord):
+    if not repo_id in repo_comparison_agg_data:
+        repo_comparison_agg_data[repo_id] = {
+            "name": repo_name,
+            "history": []
+        }
+    repo_comparison_agg_data[repo_id]["history"].append(record)
+
+
+def get_repo_comparison_data(repo_comparison_agg_data: RepoComparisonAggData, df: pd.DataFrame, date):
+    for row in df.itertuples():
+        repo_id = row.id
+        repo_name = row.name
+        record: RepoComparisonHistoryRecord = {
+            "date": date,
+            "stars": row.stars,
+            "forks": row.forks,
+            "size": row.size,
+            "open_issues": row.open_issues
+        }
+        append_to_repo_history(repo_comparison_agg_data, repo_id, repo_name, record)
