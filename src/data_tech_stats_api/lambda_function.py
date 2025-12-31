@@ -8,11 +8,8 @@ from mangum import Mangum
 
 from .config import AWSConfig
 from .utils import (
-    create_s3_client, running_on_lambda, get_object, get_objects, get_object_keys,
-    filter_object_keys, group_keys_by_period, pick_latest_key_per_period, setup_logging, timer
+    create_s3_client, running_on_lambda, get_object, setup_logging, timer
 )
-from .repo_comparison import get_repo_comparison_dict, format_repo_comparison_response
-
 
 running_on_lambda = running_on_lambda()
 
@@ -65,21 +62,12 @@ def get_repo_list(response: Response):
 
 @router.get("/repo-comparison")
 @timer
-def get_repo_comparison_data(repos: Annotated[list[str], Query()], interval: Literal["weekly", "monthly"], response: Response):
-    objects = get_objects(s3_client, aws_config.github_data_bucket, aws_config.github_data_prefix)
-    keys = get_object_keys(objects)
-    repos_keys = filter_object_keys(keys, suffix="repos.parquet")
-
-    period = interval.replace("ly", "")
-    grouped_keys = group_keys_by_period(repos_keys, period)
-    top_keys = pick_latest_key_per_period(grouped_keys)
-
-    columns_to_keep = ["id", "name", "stars", "size", "forks", "open_issues"]
-    historical_data = get_repo_comparison_dict(top_keys, s3_client, aws_config, columns_to_keep, repos)
-    content = format_repo_comparison_response(historical_data)
+def get_repo_comparison_data(interval: Literal["weekly", "monthly"], response: Response):
+    repo_comparison_path = f"{aws_config.aggregated_data_path}/repo_comparison/{interval}.json"
+    repo_comparison_obj = get_object(s3_client, aws_config.aggregated_bucket, repo_comparison_path)
 
     response.headers["Cache-Control"] = "public, max-age=3600"
-    return content
+    return json.load(repo_comparison_obj["Body"])
 
 
 app.include_router(router)
