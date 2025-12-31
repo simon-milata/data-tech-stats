@@ -11,5 +11,5 @@ def get_primary_lang_counts(df: pd.DataFrame) -> dict[str, int]:
 
 
 def save_agg_primary_lang_counts(s3_client, aws_config, interval, data):
-    output_path = f"{aws_config.data_output_path}/primary_langs_counts/{interval}.json"
+    output_path = aws_config.get_primary_langs_path(interval)
     save_data_to_s3(s3_client, aws_config.data_output_bucket, output_path, data)

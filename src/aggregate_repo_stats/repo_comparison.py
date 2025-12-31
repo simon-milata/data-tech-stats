@@ -28,5 +28,5 @@ def get_repo_comparison_data(repo_comparison_agg_data: RepoComparisonAggData, df
 
 
 def save_agg_repo_comparison_data(s3_client, aws_config, interval, data):
-    output_path = f"{aws_config.data_output_path}/repo_comparison/{interval}.json"
+    output_path = aws_config.get_repo_comparison_path(interval)
     save_data_to_s3(s3_client, aws_config.data_output_bucket, output_path, data)

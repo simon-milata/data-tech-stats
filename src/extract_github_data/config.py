@@ -20,4 +20,16 @@ class Settings(BaseSettings):
         "env_file_encoding": "utf-8",
     }
 
+    def get_repo_registry_path(self) -> str:
+        return "reference_data/repo_registry.json"
+
+    def get_repos_path(self, run_datetime) -> str:
+        return f"{self.data_output_path.rstrip("/")}/{run_datetime.strftime("%Y/%m/%d")}/repos.parquet"
+
+    def get_languages_path(self, run_datetime) -> str:
+        return f"{self.data_output_path.rstrip("/")}/{run_datetime.strftime("%Y/%m/%d")}/languages.parquet"
+
+    def get_repo_counts_path(self, run_datetime) -> str:
+        return f"{self.data_output_path.rstrip("/")}/{run_datetime.strftime("%Y/%m/%d")}/repo_counts.json"
+
 settings = Settings()

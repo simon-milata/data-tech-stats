@@ -17,3 +17,15 @@ class AWSConfig(BaseSettings):
         "env_file": str(Path(__file__).parent / ".env"),
         "env_file_encoding": "utf-8",
     }
+
+    def get_repo_list_path(self):
+        return f"{self.aggregated_data_path}/repo_list/repo_list.json"
+
+    def get_repo_comparison_path(self, interval):
+        return f"{self.aggregated_data_path}/repo_comparison/{interval}.json"
+
+    def get_primary_languages_path(self, interval):
+        return f"{self.aggregated_data_path}/primary_langs_counts/{interval}.json"
+    
+    def get_repo_counts_path(self, interval):
+        return f"{self.aggregated_data_path}/repo_counts/{interval}.json"

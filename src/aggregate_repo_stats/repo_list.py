@@ -26,5 +26,5 @@ def get_repo_list(s3_client, bucket, keys: list[str]) -> list[dict[str, str | in
 
 
 def save_repo_list(s3_client, aws_config, data):
-    output_path = f"{aws_config.data_output_path}/repo_list/repo_list.json"
+    output_path = aws_config.get_repo_list_path()
     save_data_to_s3(s3_client, aws_config.data_output_bucket, output_path, data)

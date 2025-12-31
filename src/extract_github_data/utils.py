@@ -124,11 +124,6 @@ def get_scaled_delay(per_page, max_delay=3.0, min_delay=0.0, max_per_page=100):
     factor = 1 - (per_page / max_per_page)
     delay = min_delay + factor * (max_delay - min_delay)
     return delay
-
-
-def build_output_path(data_output_prefix: str, run_datetime: datetime, file_name: str) -> str:
-    prefix = data_output_prefix.rstrip("/")
-    return f"{prefix}/{get_date_str(run_datetime)}/{file_name}"
     
 
 def get_s3_object(s3_client, bucket, path):

@@ -31,7 +31,7 @@ s3_client = create_s3_client(aws_config.profile, aws_config.region)
 @router.get("/repo-counts")
 @timer
 def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
-    data_path = f"{aws_config.aggregated_data_path}/repo_counts/{interval}.json"
+    data_path = aws_config.get_repo_counts_path(interval)
     obj = get_object(s3_client, aws_config.aggregated_bucket, data_path)
     content = json.load(obj["Body"])
 
@@ -42,7 +42,7 @@ def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
 @router.get("/primary-languages")
 @timer
 def get_primary_languages(interval: Literal["weekly", "monthly"], response: Response):
-    data_path = f"{aws_config.aggregated_data_path}/primary_langs_counts/{interval}.json"
+    data_path = aws_config.get_primary_languages_path(interval)
     obj = get_object(s3_client, aws_config.aggregated_bucket, data_path)
     content = json.load(obj["Body"])
 
@@ -53,7 +53,7 @@ def get_primary_languages(interval: Literal["weekly", "monthly"], response: Resp
 @router.get("/repo-list")
 @timer
 def get_repo_list(response: Response):
-    repo_list_path = f"{aws_config.aggregated_data_path}/repo_list/repo_list.json"
+    repo_list_path = aws_config.get_repo_list_path()
     repo_list_obj = get_object(s3_client, aws_config.aggregated_bucket, repo_list_path)
     
     response.headers["Cache-Control"] = "public, max-age=3600"
@@ -63,7 +63,7 @@ def get_repo_list(response: Response):
 @router.get("/repo-comparison")
 @timer
 def get_repo_comparison_data(interval: Literal["weekly", "monthly"], response: Response):
-    repo_comparison_path = f"{aws_config.aggregated_data_path}/repo_comparison/{interval}.json"
+    repo_comparison_path = aws_config.get_repo_comparison_path(interval)
     repo_comparison_obj = get_object(s3_client, aws_config.aggregated_bucket, repo_comparison_path)
 
     response.headers["Cache-Control"] = "public, max-age=3600"
