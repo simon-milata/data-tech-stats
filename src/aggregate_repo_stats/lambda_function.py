@@ -1,11 +1,10 @@
 from .config import AWSConfig
 from .utils import (
-    create_s3_client, running_on_lambda, get_all_objects, get_object_keys, filter_object_keys, 
-    get_latest_date_key, get_object
+    create_s3_client, running_on_lambda, get_all_objects, get_object_keys, filter_object_keys
 )
 from .repo_counts import aggregate_repo_counts, save_agg_repo_counts
-from .primary_languages import aggregate_primary_languages, save_agg_primary_lang_counts
 from .repo_list import get_repo_list, save_repo_list
+from .process_repos import process_repos_data
 
 running_on_lambda = running_on_lambda()
 
@@ -27,9 +26,7 @@ def lambda_handler(event, context):
         repo_counts_data = aggregate_repo_counts(s3_client, repo_count_keys, interval, aws_config)
         save_agg_repo_counts(s3_client, aws_config, interval, repo_counts_data)
 
-        repos_keys = filter_object_keys(keys, "repos.parquet")
-        primary_langs_agg_data = aggregate_primary_languages(s3_client, repos_keys, interval, aws_config)
-        save_agg_primary_lang_counts(s3_client, aws_config, interval, primary_langs_agg_data)
+        process_repos_data(s3_client, aws_config, keys, interval)
 
 
 if __name__ == "__main__":

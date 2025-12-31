@@ -59,9 +59,5 @@ export async function getRepoList() {
 }
 
 export async function getRepoComparison(repos, range = 'weekly') {
-    const params = new URLSearchParams();
-    params.append('interval', range);
-    repos.forEach(repo => params.append('repos', repo));
-    const reposKey = [...repos].sort().join(',');
-    return fetchWithCache(`${API_BASE}/repo-comparison?${params.toString()}`, `repoComparison_${range}_${reposKey}`, 60);
+    return fetchWithCache(`${API_BASE}/repo-comparison?interval=${encodeURIComponent(range)}`, `repoComparison_aggregated_${range}`, 60);
 }
