@@ -27,6 +27,6 @@ def get_repo_comparison_data(repo_comparison_agg_data: RepoComparisonAggData, df
         append_to_repo_history(repo_comparison_agg_data, repo_id, repo_name, record)
 
 
-def save_agg_repo_comparison_data(s3_client, aws_config, interval, data):
-    output_path = aws_config.get_repo_comparison_path(interval)
-    save_data_to_s3(s3_client, aws_config.data_output_bucket, output_path, data)
+def save_agg_repo_comparison_data(s3_client, settings, interval, data):
+    output_path = settings.get_repo_comparison_path(interval)
+    save_data_to_s3(s3_client, settings.bucket, output_path, data)
