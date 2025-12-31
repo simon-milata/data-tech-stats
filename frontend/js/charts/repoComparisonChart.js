@@ -261,7 +261,7 @@ async function updateChart() {
     
     if (updateId !== latestUpdateId) return;
 
-    if (!data || data.length === 0) return;
+    if (!data || Object.keys(data).length === 0) return;
 
     if (currentView === 'comparison') {
         if (chart && chart.config.type !== 'bar') {
@@ -269,33 +269,39 @@ async function updateChart() {
             chart = null;
         }
 
-        const latestData = data[data.length - 1];
-        const rDataList = Array.isArray(latestData.repos) ? latestData.repos : Object.values(latestData.repos);
         const metrics = ['stars', 'size', 'forks', 'open_issues'];
         const metricLabels = ['Stars', 'Size', 'Forks', 'Open Issues'];
         
         // Calculate max for normalization
         const maxValues = {};
-        metrics.forEach(m => {
-            maxValues[m] = 0;
-            reposArray.forEach(repoId => {
-                const repo = rDataList.find(r => String(r.id) === String(repoId));
-                if (repo && repo[m] > maxValues[m]) {
-                    maxValues[m] = repo[m];
-                }
-            });
-            if (maxValues[m] === 0) maxValues[m] = 1;
+        metrics.forEach(m => maxValues[m] = 0);
+
+        reposArray.forEach(repoId => {
+            const repoData = data[repoId];
+            if (repoData && repoData.history && repoData.history.length > 0) {
+                const latest = repoData.history[repoData.history.length - 1];
+                metrics.forEach(m => {
+                    if ((latest[m] || 0) > maxValues[m]) {
+                        maxValues[m] = latest[m];
+                    }
+                });
+            }
         });
+        
+        metrics.forEach(m => { if (maxValues[m] === 0) maxValues[m] = 1; });
 
         const datasets = reposArray.map((repoId, index) => {
             const repo = allRepos.find(r => r.id === repoId);
             const repoName = repo ? repo.name : repoId;
-            const repoStats = rDataList.find(r => String(r.id) === String(repoId)) || {};
+            const repoData = data[repoId];
+            const latest = (repoData && repoData.history && repoData.history.length > 0) 
+                ? repoData.history[repoData.history.length - 1] 
+                : {};
 
             return {
                 label: repoName,
-                data: metrics.map(m => ((repoStats[m] || 0) / maxValues[m]) * 100),
-                originalData: metrics.map(m => repoStats[m] || 0),
+                data: metrics.map(m => ((latest[m] || 0) / maxValues[m]) * 100),
+                originalData: metrics.map(m => latest[m] || 0),
                 backgroundColor: COLORS[index % COLORS.length],
                 borderColor: COLORS[index % COLORS.length],
                 borderRadius: 4,
@@ -351,17 +357,27 @@ async function updateChart() {
         chart = null;
     }
 
-    const labels = data.map(d => formatWeekLabel(d.date, currentRange));
+    const allDates = new Set();
+    reposArray.forEach(repoId => {
+        const repoData = data[repoId];
+        if (repoData && repoData.history) {
+            repoData.history.forEach(h => allDates.add(h.date));
+        }
+    });
+    const sortedDates = Array.from(allDates).sort();
+
+    const labels = sortedDates.map(d => formatWeekLabel(d, currentRange));
     const datasets = reposArray.map((repoId, index) => {
         const repo = allRepos.find(r => r.id === repoId);
         const repoName = repo ? repo.name : repoId;
+        const repoData = data[repoId];
+        const history = (repoData && repoData.history) ? repoData.history : [];
 
         return {
             label: repoName,
-            data: data.map(d => {
-                const reposList = Array.isArray(d.repos) ? d.repos : Object.values(d.repos || {});
-                const repoData = reposList.find(r => String(r.id) === String(repoId));
-                return repoData ? repoData[currentMetric] : null;
+            data: sortedDates.map(date => {
+                const entry = history.find(h => h.date === date);
+                return entry ? entry[currentMetric] : null;
             }),
             borderColor: COLORS[index % COLORS.length],
             backgroundColor: COLORS[index % COLORS.length] + '22',
