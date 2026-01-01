@@ -9,13 +9,23 @@ export async function getRepoCounts(range = 'weekly') {
         return { date: entry.date, count: total };
     });
 }
-async function fetchWithCache(url, key, ttlMinutes) {
+
+function getLastMidnightUTC1() {
+    const now = new Date();
+    const offset = 60 * 60 * 1000; // UTC+1
+    const timeInZone = new Date(now.getTime() + offset);
+    const midnightInZone = Date.UTC(timeInZone.getUTCFullYear(), timeInZone.getUTCMonth(), timeInZone.getUTCDate());
+    return midnightInZone - offset;
+}
+
+async function fetchWithCache(url, key) {
     const now = new Date().getTime();
     const cached = localStorage.getItem(key);
+    const lastMidnight = getLastMidnightUTC1();
 
     if (cached) {
         const { timestamp, data } = JSON.parse(cached);
-        if (now - timestamp < ttlMinutes * 60 * 1000) {
+        if (timestamp > lastMidnight) {
             return data;
         }
         localStorage.removeItem(key);
@@ -37,27 +47,24 @@ async function fetchWithCache(url, key, ttlMinutes) {
 export async function getRepoCountsByTopic(range = 'weekly') {
     return fetchWithCache(
         `${API_BASE}/repo-counts?interval=${encodeURIComponent(range)}`,
-        `repoCounts_${range}`,
-        60
+        `repoCounts_${range}`
     );
 }
 
 export async function getLanguagesTimeseries(range = 'weekly') {
     return fetchWithCache(
         `${API_BASE}/primary-languages?interval=${encodeURIComponent(range)}`,
-        `languages_${range}`,
-        60
+        `languages_${range}`
     );
 }
 
 export async function getRepoList() {
     return fetchWithCache(
         `${API_BASE}/repo-list`,
-        `repoList`,
-        60 * 24 // Cache for 24 hours
+        `repoList`
     );
 }
 
 export async function getRepoComparison(range = 'weekly') {
-    return fetchWithCache(`${API_BASE}/repo-comparison?interval=${encodeURIComponent(range)}`, `repoComparison_aggregated_${range}`, 60);
+    return fetchWithCache(`${API_BASE}/repo-comparison?interval=${encodeURIComponent(range)}`, `repoComparison_aggregated_${range}`);
 }
