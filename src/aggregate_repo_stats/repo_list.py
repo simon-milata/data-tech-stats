@@ -1,5 +1,3 @@
-import json
-
 import pandas as pd
 
 from .utils import get_latest_date_key, get_object, parse_parquet, save_data_to_s3

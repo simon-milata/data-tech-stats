@@ -5,7 +5,7 @@ from .types import RepoComparisonAggData, RepoComparisonHistoryRecord, RepoId
 
 
 def append_to_repo_history(repo_comparison_agg_data: RepoComparisonAggData, repo_id: RepoId, repo_name: str, record: RepoComparisonHistoryRecord):
-    if not repo_id in repo_comparison_agg_data:
+    if repo_id not in repo_comparison_agg_data:
         repo_comparison_agg_data[repo_id] = {
             "name": repo_name,
             "history": []

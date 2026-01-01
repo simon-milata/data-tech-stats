@@ -1,8 +1,7 @@
 import json
-from typing import Literal, Annotated
-from collections import defaultdict
+from typing import Literal
 
-from fastapi import FastAPI, APIRouter, Query, Response
+from fastapi import FastAPI, APIRouter, Response
 from fastapi.middleware.cors import CORSMiddleware
 from mangum import Mangum
 
