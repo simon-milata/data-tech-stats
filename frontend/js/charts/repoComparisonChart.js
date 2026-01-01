@@ -253,7 +253,7 @@ async function updateChart() {
     const reposArray = Array.from(selectedRepos);
     let data;
     try {
-        data = await getRepoComparison(reposArray, currentRange);
+        data = await getRepoComparison(currentRange);
     } catch (error) {
         console.error("Failed to fetch repo comparison data:", error);
         return;
@@ -279,7 +279,7 @@ async function updateChart() {
         reposArray.forEach(repoId => {
             const repoData = data[repoId];
             if (repoData && repoData.history && repoData.history.length > 0) {
-                const latest = repoData.history[repoData.history.length - 1];
+                const latest = repoData.history.reduce((a, b) => (a.date > b.date ? a : b));
                 metrics.forEach(m => {
                     if ((latest[m] || 0) > maxValues[m]) {
                         maxValues[m] = latest[m];
@@ -294,9 +294,10 @@ async function updateChart() {
             const repo = allRepos.find(r => r.id === repoId);
             const repoName = repo ? repo.name : repoId;
             const repoData = data[repoId];
-            const latest = (repoData && repoData.history && repoData.history.length > 0) 
-                ? repoData.history[repoData.history.length - 1] 
-                : {};
+            let latest = {};
+            if (repoData && repoData.history && repoData.history.length > 0) {
+                latest = repoData.history.reduce((a, b) => (a.date > b.date ? a : b));
+            }
 
             return {
                 label: repoName,
