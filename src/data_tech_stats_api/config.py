@@ -10,6 +10,8 @@ class Settings(BaseSettings):
     profile: str = "default"
     region: str = "eu-central-1"
     logging_level: str = "INFO"
+    allowed_origins: str = "http://127.0.0.1:5500"
+    api_prefix: str = ""
 
     model_config = {
         "env_file": str(Path(__file__).parent / ".env"),

@@ -15,11 +15,11 @@ running_on_lambda = running_on_lambda()
 settings = Settings()
 setup_logging(settings.logging_level)
 app = FastAPI()
-router = APIRouter(prefix="/data-tech-stats/api")
+router = APIRouter(prefix=settings.api_prefix)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5500"],
+    allow_origins=settings.allowed_origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
