@@ -8,7 +8,7 @@ from mangum import Mangum
 
 from .config import Settings
 from .utils import (
-    create_s3_client, running_on_lambda, get_object, setup_logging, timer
+    create_s3_client, running_on_lambda, get_object, setup_logging, timer, get_seconds_until_midnight
 )
 
 running_on_lambda = running_on_lambda()
@@ -28,6 +28,7 @@ app.add_middleware(
 
 s3_client = create_s3_client(settings.profile, settings.region)
 
+
 @router.get("/repo-counts")
 @timer
 def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
@@ -35,7 +36,8 @@ def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
     obj = get_object(s3_client, settings.bucket, data_path)
     content = json.load(obj["Body"])
 
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    max_age = get_seconds_until_midnight()
+    response.headers["Cache-Control"] = f"public, max-age={max_age}"
     return content
 
 
@@ -46,7 +48,8 @@ def get_primary_languages(interval: Literal["weekly", "monthly"], response: Resp
     obj = get_object(s3_client, settings.bucket, data_path)
     content = json.load(obj["Body"])
 
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    max_age = get_seconds_until_midnight()
+    response.headers["Cache-Control"] = f"public, max-age={max_age}"
     return content
 
 
@@ -56,7 +59,8 @@ def get_repo_list(response: Response):
     repo_list_path = settings.get_repo_list_path()
     repo_list_obj = get_object(s3_client, settings.bucket, repo_list_path)
     
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    max_age = get_seconds_until_midnight()
+    response.headers["Cache-Control"] = f"public, max-age={max_age}"
     return json.load(repo_list_obj["Body"])
 
 
@@ -66,7 +70,8 @@ def get_repo_comparison_data(interval: Literal["weekly", "monthly"], response: R
     repo_comparison_path = settings.get_repo_comparison_path(interval)
     repo_comparison_obj = get_object(s3_client, settings.bucket, repo_comparison_path)
 
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    max_age = get_seconds_until_midnight()
+    response.headers["Cache-Control"] = f"public, max-age={max_age}"
     return json.load(repo_comparison_obj["Body"])
 
 
