@@ -58,6 +58,6 @@ export async function getRepoList() {
     );
 }
 
-export async function getRepoComparison(repos, range = 'weekly') {
+export async function getRepoComparison(range = 'weekly') {
     return fetchWithCache(`${API_BASE}/repo-comparison?interval=${encodeURIComponent(range)}`, `repoComparison_aggregated_${range}`, 60);
 }
