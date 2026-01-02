@@ -64,9 +64,23 @@ function setupSelectionUI() {
     // Create wrapper for search input and toggle button
     const wrapper = document.createElement('div');
     wrapper.className = 'repo-search-wrapper';
+    wrapper.style.position = 'relative';
     
     repoSearch.parentNode.insertBefore(wrapper, repoSearch);
     wrapper.appendChild(repoSearch);
+
+    if (repoListContainer) {
+        wrapper.appendChild(repoListContainer);
+        repoListContainer.style.position = 'absolute';
+        repoListContainer.style.top = '100%';
+        repoListContainer.style.left = '0';
+        repoListContainer.style.right = '0';
+        repoListContainer.style.zIndex = '50';
+        repoListContainer.style.maxHeight = '300px';
+        repoListContainer.style.overflowY = 'auto';
+        repoListContainer.style.borderRadius = '0.5rem';
+        repoListContainer.style.marginTop = '4px';
+    }
 
     // Create toggle button
     const toggleBtn = document.createElement('button');
