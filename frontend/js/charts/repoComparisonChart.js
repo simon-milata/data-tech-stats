@@ -125,6 +125,8 @@ function renderOptions() {
         return;
     }
 
+    const canHover = window.matchMedia('(hover: hover)').matches;
+
     filtered.forEach(repo => {
         const div = document.createElement('div');
         div.className = 'repo-option';
@@ -132,10 +134,48 @@ function renderOptions() {
             div.classList.add('disabled');
             div.title = `Max ${MAX_SELECTION} repositories selected`;
         }
-        div.textContent = repo.name;
-        div.addEventListener('mouseenter', (e) => showTooltip(e, repo));
-        div.addEventListener('mousemove', moveTooltip);
-        div.addEventListener('mouseleave', hideTooltip);
+
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        const stars = repo.stars || 0;
+        const starsFormatted = new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(stars).toLowerCase();
+        const displayName = repo.name.length > 20 ? repo.name.substring(0, 20) + '...' : repo.name;
+        div.innerHTML = `<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px;">${displayName}</span> <span style="color: #94a3b8; font-size: 0.85em; white-space: nowrap;">★ ${starsFormatted}</span>`;
+
+        if (canHover) {
+            div.addEventListener('mouseenter', (e) => showTooltip(e, repo));
+            div.addEventListener('mousemove', moveTooltip);
+            div.addEventListener('mouseleave', hideTooltip);
+        } else {
+            div.style.userSelect = 'none';
+
+            let pressTimer;
+            let isLongPress = false;
+
+            div.addEventListener('touchstart', (e) => {
+                isLongPress = false;
+                pressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    const touch = e.touches[0];
+                    showTooltip({ clientX: touch.clientX, clientY: touch.clientY }, repo);
+                }, 500);
+            }, { passive: true });
+
+            div.addEventListener('touchend', (e) => {
+                clearTimeout(pressTimer);
+                hideTooltip();
+                if (isLongPress && e.cancelable) e.preventDefault();
+            });
+
+            div.addEventListener('touchmove', () => {
+                clearTimeout(pressTimer);
+                hideTooltip();
+            }, { passive: true });
+
+            div.addEventListener('contextmenu', e => e.preventDefault());
+        }
+
         if (!maxReached) {
             div.onclick = () => toggleRepo(repo.id);
         }
