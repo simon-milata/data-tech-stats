@@ -17,6 +17,7 @@ let latestUpdateId = 0;
 let searchTerm = '';
 let selectedContainer = null;
 let tooltipEl = null;
+let currentRenderLimit = 50;
 
 const repoListContainer = document.getElementById('repoListContainer');
 const repoSearch = document.getElementById('repoSearch');
@@ -64,9 +65,23 @@ function setupSelectionUI() {
     // Create wrapper for search input and toggle button
     const wrapper = document.createElement('div');
     wrapper.className = 'repo-search-wrapper';
+    wrapper.style.position = 'relative';
     
     repoSearch.parentNode.insertBefore(wrapper, repoSearch);
     wrapper.appendChild(repoSearch);
+
+    if (repoListContainer) {
+        wrapper.appendChild(repoListContainer);
+        repoListContainer.style.position = 'absolute';
+        repoListContainer.style.top = '100%';
+        repoListContainer.style.left = '0';
+        repoListContainer.style.right = '0';
+        repoListContainer.style.zIndex = '50';
+        repoListContainer.style.maxHeight = '300px';
+        repoListContainer.style.overflowY = 'auto';
+        repoListContainer.style.borderRadius = '0.5rem';
+        repoListContainer.style.marginTop = '4px';
+    }
 
     // Create toggle button
     const toggleBtn = document.createElement('button');
@@ -105,16 +120,15 @@ function renderSelected() {
 }
 
 function renderOptions() {
+    hideTooltip();
     repoListContainer.innerHTML = '';
     const maxReached = selectedRepos.size >= MAX_SELECTION;
 
-    const filtered = allRepos.filter(r => {
-        const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const notSelected = !selectedRepos.has(r.id);
-        return matchesSearch && notSelected;
-    });
+    const term = searchTerm.toLowerCase();
+    const allMatches = allRepos.filter(r => !selectedRepos.has(r.id) && r.name.toLowerCase().includes(term));
+    const filtered = allMatches.slice(0, currentRenderLimit);
 
-    if (filtered.length === 0) {
+    if (allMatches.length === 0) {
         if (searchTerm) {
             const msg = document.createElement('div');
             msg.className = 'no-results';
@@ -124,6 +138,8 @@ function renderOptions() {
         return;
     }
 
+    const canHover = window.matchMedia('(hover: hover)').matches;
+
     filtered.forEach(repo => {
         const div = document.createElement('div');
         div.className = 'repo-option';
@@ -131,25 +147,86 @@ function renderOptions() {
             div.classList.add('disabled');
             div.title = `Max ${MAX_SELECTION} repositories selected`;
         }
-        div.textContent = repo.name;
-        div.addEventListener('mouseenter', (e) => showTooltip(e, repo));
-        div.addEventListener('mousemove', moveTooltip);
-        div.addEventListener('mouseleave', hideTooltip);
+
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.alignItems = 'center';
+        const stars = repo.stars || 0;
+        const starsFormatted = new Intl.NumberFormat('en-US', { notation: "compact", compactDisplay: "short" }).format(stars).toLowerCase();
+        const displayName = repo.name.length > 20 ? repo.name.substring(0, 20) + '...' : repo.name;
+        div.innerHTML = `<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-right: 8px;">${displayName}</span> <span style="color: #94a3b8; font-size: 0.85em; white-space: nowrap;">★ ${starsFormatted}</span>`;
+
+        if (canHover) {
+            div.addEventListener('mouseenter', (e) => showTooltip(e, repo));
+            div.addEventListener('mousemove', moveTooltip);
+            div.addEventListener('mouseleave', hideTooltip);
+        } else {
+            div.style.userSelect = 'none';
+
+            let pressTimer;
+            let isLongPress = false;
+
+            div.addEventListener('touchstart', (e) => {
+                isLongPress = false;
+                pressTimer = setTimeout(() => {
+                    isLongPress = true;
+                    const touch = e.touches[0];
+                    showTooltip({ clientX: touch.clientX, clientY: touch.clientY }, repo);
+                }, 500);
+            }, { passive: true });
+
+            div.addEventListener('touchend', (e) => {
+                clearTimeout(pressTimer);
+                hideTooltip();
+                if (isLongPress && e.cancelable) e.preventDefault();
+            });
+
+            div.addEventListener('touchmove', () => {
+                clearTimeout(pressTimer);
+                hideTooltip();
+            }, { passive: true });
+
+            div.addEventListener('contextmenu', e => e.preventDefault());
+        }
+
         if (!maxReached) {
             div.onclick = () => toggleRepo(repo.id);
         }
         repoListContainer.appendChild(div);
     });
+
+    if (allMatches.length > currentRenderLimit) {
+        const infoDiv = document.createElement('div');
+        infoDiv.style.padding = '8px 12px';
+        infoDiv.style.textAlign = 'center';
+        infoDiv.style.color = '#60a5fa';
+        infoDiv.style.fontSize = '0.85em';
+        infoDiv.style.borderTop = '1px solid #334155';
+        infoDiv.style.cursor = 'pointer';
+        infoDiv.textContent = `Load more (${allMatches.length - currentRenderLimit} remaining)`;
+        infoDiv.onclick = (e) => {
+            e.stopPropagation();
+            currentRenderLimit += 50;
+            renderOptions();
+        };
+        repoListContainer.appendChild(infoDiv);
+    }
 }
 
 function setupSearch() {
+    let debounceTimer;
     repoSearch.addEventListener('input', (e) => {
         searchTerm = e.target.value;
-        renderOptions();
         
         if (repoListContainer.style.display === 'none') {
             toggleRepoList();
         }
+        currentRenderLimit = 50;
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            renderOptions();
+        }, 300);
     });
 }
 
@@ -161,6 +238,7 @@ function toggleRepo(repoId) {
         selectedRepos.add(repoId);
         repoSearch.value = '';
         searchTerm = '';
+        currentRenderLimit = 50;
     }
     renderUI();
     updateChart();
