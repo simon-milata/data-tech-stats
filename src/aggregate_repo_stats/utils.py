@@ -53,13 +53,20 @@ def get_date_from_key(key: str) -> date:
     return datetime(int(year), int(month), int(day)).date()
 
 
+def get_iso_year_week(date: date) -> str:
+    """Formats a date into iso {year}-{week} (2025-W48)."""
+    iso_year, iso_week, _ = date.isocalendar()
+    year_period = f"{iso_year}-W{iso_week:02}"
+    return year_period
+
+
 def group_keys_by_interval(keys: list[str], interval: Literal["weekly", "monthly"]) -> dict[str, list[str]]:
     """Groups S3 keys by period (month / week)"""
     grouped_dates = defaultdict(list)
     for key in keys:
         date = get_date_from_key(key)
         if interval == "weekly":
-            year_period = f"{date.year}-W{date.isocalendar().week:02}"
+            year_period = get_iso_year_week(date)
         elif interval == "monthly":
             year_period = f"{date.year}-{date.month:02}"
         grouped_dates[year_period].append(key)

@@ -2,12 +2,29 @@ from datetime import datetime
 
 from aggregate_repo_stats.utils import (
     get_date_from_key, group_keys_by_interval, pick_latest_key_per_period,
-    get_latest_date_key
+    get_latest_date_key, get_iso_year_week
 )
 
 def test_get_date_from_key():
     key = "prefix/2025/11/28/object.json"
     assert get_date_from_key(key) == datetime(2025, 11, 28).date()
+
+
+def test_get_iso_year_week():
+    # Standard date
+    assert get_iso_year_week(datetime(2025, 11, 28).date()) == "2025-W48"
+
+    # Edge case: Date in calendar year X but ISO year X+1
+    # Dec 30, 2025 is in the first week of ISO year 2026 because Jan 1, 2026 is a Thursday
+    assert get_iso_year_week(datetime(2025, 12, 30).date()) == "2026-W01"
+
+    # Edge case: Date in calendar year X but ISO year X-1
+    # Jan 1, 2021 was a Friday. The first Thursday of 2021 was Jan 7.
+    # Thus, Jan 1-3, 2021 belong to the last week of ISO year 2020 (Week 53).
+    assert get_iso_year_week(datetime(2021, 1, 1).date()) == "2020-W53"
+
+    # Padding check
+    assert get_iso_year_week(datetime(2025, 1, 6).date()) == "2025-W02"
 
 
 def test_group_keys_by_week():
