@@ -3,6 +3,7 @@ from typing import Literal
 
 from fastapi import FastAPI, APIRouter, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from mangum import Mangum
 
 from .config import Settings
@@ -24,6 +25,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=10000)
 
 s3_client = create_s3_client(settings.profile, settings.region)
 
