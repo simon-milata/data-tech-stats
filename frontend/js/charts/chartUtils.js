@@ -175,3 +175,80 @@ export function externalTooltip(context) {
     tip.style.transform = 'none';
     tip.style.opacity = 1;
 }
+
+export function setupChartInteractions(canvas, getChartInstance) {
+    if (!canvas || canvas.hasChartInteractions) return;
+    
+    canvas.hasChartInteractions = true;
+    let pressTimer;
+    let isLongPressActive = false;
+    let lastTouchTime = 0;
+    let startX = 0;
+    let startY = 0;
+
+    const clearTooltip = () => {
+        clearTimeout(pressTimer);
+        isLongPressActive = false;
+        const chart = getChartInstance();
+        if (chart) {
+            chart.tooltip.setActiveElements([], { x: 0, y: 0 });
+            chart.update();
+        }
+    };
+
+    const updateTooltip = (e) => {
+        const chart = getChartInstance();
+        if (chart) {
+            const elements = chart.getElementsAtEventForMode(e, 'index', { intersect: false }, false);
+            if (elements.length) {
+                chart.tooltip.setActiveElements(elements);
+                chart.update();
+            }
+        }
+    };
+
+    canvas.addEventListener('touchstart', (e) => {
+        lastTouchTime = Date.now();
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        isLongPressActive = false;
+        pressTimer = setTimeout(() => {
+            isLongPressActive = true;
+            updateTooltip(e);
+        }, 500);
+    }, { passive: true });
+
+    canvas.addEventListener('touchend', () => {
+        lastTouchTime = Date.now();
+        clearTooltip();
+    });
+    
+    canvas.addEventListener('touchmove', (e) => {
+        if (isLongPressActive) {
+            if (e.cancelable) e.preventDefault();
+            updateTooltip(e);
+        } else {
+            const touch = e.touches[0];
+            const diffX = Math.abs(touch.clientX - startX);
+            const diffY = Math.abs(touch.clientY - startY);
+            
+            if (diffX > 10 || diffY > 10) {
+                clearTimeout(pressTimer);
+            }
+        }
+    }, { passive: false });
+    
+    canvas.addEventListener('touchcancel', clearTooltip);
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (Date.now() - lastTouchTime < 800) return;
+        updateTooltip(e);
+    });
+
+    canvas.addEventListener('mouseout', () => {
+        if (Date.now() - lastTouchTime < 800) return;
+        clearTooltip();
+    });
+}

@@ -1,5 +1,5 @@
 import { getLanguagesTimeseries } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions } from './chartUtils.js';
 
 let langChartInstance = null;
 let allLanguagesWithCounts = [];
@@ -196,6 +196,7 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
             datasets: datasets
         },
         options: {
+            events: [],
             responsive: true,
             maintainAspectRatio: false,
             scales: {
@@ -211,6 +212,7 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
     };
 
     if (langChartInstance) {
+        langChartInstance.options.events = [];
         langChartInstance.data.labels = labels;
         langChartInstance.data.datasets = datasets;
         langChartInstance.update();
@@ -220,6 +222,7 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
     }
 
     langChartInstance = new Chart(ctx, config);
+    setupChartInteractions(canvas, () => langChartInstance);
     renderSelector();
     renderLegend(langChartInstance, document.getElementById('languagesLegend'));
 }

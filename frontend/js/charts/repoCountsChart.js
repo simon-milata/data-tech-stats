@@ -1,5 +1,5 @@
 import { getRepoCountsByTopic } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate, setupChartInteractions } from './chartUtils.js';
 
 let chart = null;
 const colors = [
@@ -54,6 +54,7 @@ export async function renderRepoCountsChart(selectedTopics = null, onSummary, ra
         type: 'line',
         data: { labels, datasets },
         options: {
+            events: [],
             responsive: true,
             maintainAspectRatio: false,
             scales: {
@@ -69,6 +70,7 @@ export async function renderRepoCountsChart(selectedTopics = null, onSummary, ra
     };
 
     if (chart) {
+        chart.options.events = [];
         chart.data.labels = labels;
         chart.data.datasets = datasets;
         chart.update();
@@ -81,6 +83,7 @@ export async function renderRepoCountsChart(selectedTopics = null, onSummary, ra
     }
 
     chart = new Chart(ctx, config);
+    setupChartInteractions(ctx.canvas, () => chart);
     
     const dropdown = document.getElementById('repoTopicFilters');
     if (!dropdown) renderLegend(chart, document.getElementById('repoLegend'));

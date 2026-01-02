@@ -1,5 +1,5 @@
 import { getRepoList, getRepoComparison } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions } from './chartUtils.js';
 
 const MAX_SELECTION = 5;
 const COLORS = [
@@ -48,6 +48,7 @@ export async function initRepoComparisonChart() {
         setupRangeSwitcher();
         setupViewSwitcher();
         moveMetricSwitcherToHeader();
+        setupChartInteractions(ctx.canvas, () => chart);
         
         renderUI();
         
@@ -390,6 +391,7 @@ async function updateChart() {
         });
 
         if (chart) {
+            chart.options.events = [];
             chart.data.labels = metricLabels;
             chart.data.datasets = datasets;
             chart.update();
@@ -398,6 +400,7 @@ async function updateChart() {
                 type: 'bar',
                 data: { labels: metricLabels, datasets: datasets },
                 options: {
+                    events: [],
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
@@ -474,6 +477,7 @@ async function updateChart() {
     });
 
     if (chart) {
+        chart.options.events = [];
         chart.data.labels = labels;
         chart.data.datasets = datasets;
         chart.update();
@@ -486,6 +490,7 @@ async function updateChart() {
                 datasets: datasets
             },
             options: {
+                events: [],
                 responsive: true,
                 maintainAspectRatio: false,
                 interaction: {
