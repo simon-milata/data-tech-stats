@@ -105,6 +105,7 @@ function renderSelected() {
 }
 
 function renderOptions() {
+    hideTooltip();
     repoListContainer.innerHTML = '';
     const maxReached = selectedRepos.size >= MAX_SELECTION;
 
