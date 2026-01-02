@@ -17,6 +17,7 @@ let latestUpdateId = 0;
 let searchTerm = '';
 let selectedContainer = null;
 let tooltipEl = null;
+let currentRenderLimit = 50;
 
 const repoListContainer = document.getElementById('repoListContainer');
 const repoSearch = document.getElementById('repoSearch');
@@ -123,13 +124,11 @@ function renderOptions() {
     repoListContainer.innerHTML = '';
     const maxReached = selectedRepos.size >= MAX_SELECTION;
 
-    const filtered = allRepos.filter(r => {
-        const matchesSearch = r.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const notSelected = !selectedRepos.has(r.id);
-        return matchesSearch && notSelected;
-    });
+    const term = searchTerm.toLowerCase();
+    const allMatches = allRepos.filter(r => !selectedRepos.has(r.id) && r.name.toLowerCase().includes(term));
+    const filtered = allMatches.slice(0, currentRenderLimit);
 
-    if (filtered.length === 0) {
+    if (allMatches.length === 0) {
         if (searchTerm) {
             const msg = document.createElement('div');
             msg.className = 'no-results';
@@ -195,16 +194,39 @@ function renderOptions() {
         }
         repoListContainer.appendChild(div);
     });
+
+    if (allMatches.length > currentRenderLimit) {
+        const infoDiv = document.createElement('div');
+        infoDiv.style.padding = '8px 12px';
+        infoDiv.style.textAlign = 'center';
+        infoDiv.style.color = '#60a5fa';
+        infoDiv.style.fontSize = '0.85em';
+        infoDiv.style.borderTop = '1px solid #334155';
+        infoDiv.style.cursor = 'pointer';
+        infoDiv.textContent = `Load more (${allMatches.length - currentRenderLimit} remaining)`;
+        infoDiv.onclick = (e) => {
+            e.stopPropagation();
+            currentRenderLimit += 50;
+            renderOptions();
+        };
+        repoListContainer.appendChild(infoDiv);
+    }
 }
 
 function setupSearch() {
+    let debounceTimer;
     repoSearch.addEventListener('input', (e) => {
         searchTerm = e.target.value;
-        renderOptions();
         
         if (repoListContainer.style.display === 'none') {
             toggleRepoList();
         }
+        currentRenderLimit = 50;
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            renderOptions();
+        }, 300);
     });
 }
 
@@ -216,6 +238,7 @@ function toggleRepo(repoId) {
         selectedRepos.add(repoId);
         repoSearch.value = '';
         searchTerm = '';
+        currentRenderLimit = 50;
     }
     renderUI();
     updateChart();
