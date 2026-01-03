@@ -274,6 +274,7 @@ function setupRangeSwitcher() {
             repoComparisonRangeSwitcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             currentRange = e.target.dataset.range;
+            getRepoComparison(currentRange);
             updateChart();
         }
     });

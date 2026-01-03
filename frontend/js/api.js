@@ -1,5 +1,8 @@
 const API_BASE = (typeof window !== 'undefined' && window.env && window.env.API_BASE);
 
+const comparisonCache = {};
+const comparisonPromises = {};
+
 export async function getRepoCounts(range = 'weekly') {
     const byTopic = await getRepoCountsByTopic(range);
     if (!byTopic || !byTopic.length) return [];
@@ -58,13 +61,45 @@ export async function getLanguagesTimeseries(range = 'weekly') {
     );
 }
 
-export async function getRepoList() {
-    return fetchWithCache(
-        `${API_BASE}/repo-list`,
-        `repoList`
-    );
+export async function getRepoList(range = 'weekly') {
+    // Reuse the comparison endpoint to generate the list
+    const data = await getRepoComparison(range);
+    if (!data) return [];
+
+    return Object.entries(data).map(([id, repoData]) => {
+        const history = repoData.history || [];
+        // Find the entry with the latest date
+        const latest = history.length > 0 
+            ? history.reduce((a, b) => (a.date > b.date ? a : b)) 
+            : {};
+
+        return {
+            id: id,
+            // Fallback to ID if name is missing in the comparison data
+            name: repoData.name || id,
+            stars: latest.stars || 0
+        };
+    });
 }
 
 export async function getRepoComparison(range = 'weekly') {
-    return fetchWithCache(`${API_BASE}/repo-comparison?interval=${encodeURIComponent(range)}`, `repoComparison_aggregated_${range}`);
+    if (comparisonCache[range]) {
+        return comparisonCache[range];
+    }
+
+    if (comparisonPromises[range]) {
+        return comparisonPromises[range];
+    }
+
+    const promise = fetchWithCache(
+        `${API_BASE}/repo-comparison?interval=${encodeURIComponent(range)}`, 
+        `repoComparison_aggregated_${range}`
+    ).then(data => {
+        if (data) comparisonCache[range] = data;
+        delete comparisonPromises[range];
+        return data;
+    });
+
+    comparisonPromises[range] = promise;
+    return promise;
 }
