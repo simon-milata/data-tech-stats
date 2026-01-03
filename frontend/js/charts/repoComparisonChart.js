@@ -298,7 +298,13 @@ function setupViewSwitcher() {
 function updateControlsVisibility() {
     const isComparison = currentView === 'comparison';
     if (metricSwitcher) {
-        metricSwitcher.style.display = isComparison ? 'none' : 'inline-flex';
+        metricSwitcher.style.opacity = isComparison ? '0.3' : '1';
+        metricSwitcher.style.cursor = isComparison ? 'default' : 'auto';
+        metricSwitcher.style.pointerEvents = 'auto';
+        Array.from(metricSwitcher.children).forEach(child => {
+            child.style.pointerEvents = isComparison ? 'none' : 'auto';
+        });
+        metricSwitcher.style.display = 'inline-flex';
     }
 }
 
@@ -308,6 +314,9 @@ function moveMetricSwitcherToHeader() {
     const headerContainer = document.querySelector('.graph-card[data-chart-type="comparison"] .controls');
     if (headerContainer) {
         headerContainer.appendChild(metricSwitcher);
+        if (repoComparisonViewSwitcher) {
+            headerContainer.appendChild(repoComparisonViewSwitcher);
+        }
         metricSwitcher.style.marginBottom = '0';
         metricSwitcher.style.marginRight = '12px';
         metricSwitcher.style.display = 'inline-flex';
