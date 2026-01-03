@@ -54,25 +54,32 @@ const initCharts = async () => {
         
         renderLanguagesCountsChart(ranges[CHART_TYPES.LANGUAGES]);
 
-        // Lazy load comparison chart when it approaches viewport
-        const comparisonCard = document.querySelector('.graph-card[data-chart-type="comparison"]');
-        
-        const loadComparison = async () => {
-            const { initRepoComparisonChart } = await import('./charts/repoComparisonChart.js');
-            initRepoComparisonChart();
+        const setupComparisonLazyLoad = () => {
+            const comparisonCard = document.querySelector('.graph-card[data-chart-type="comparison"]');
+            
+            const loadComparison = async () => {
+                const { initRepoComparisonChart } = await import('./charts/repoComparisonChart.js');
+                initRepoComparisonChart();
+            };
+
+            if (comparisonCard && 'IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        loadComparison();
+                        observer.disconnect();
+                    }
+                }, { rootMargin: '200px' });
+                observer.observe(comparisonCard);
+            } else {
+                setTimeout(loadComparison, 0);
+            }
         };
 
-        if (comparisonCard && 'IntersectionObserver' in window) {
-            const observer = new IntersectionObserver((entries) => {
-                if (entries[0].isIntersecting) {
-                    loadComparison();
-                    observer.disconnect();
-                }
-            }, { rootMargin: '200px' });
-            observer.observe(comparisonCard);
+        // Defer observer setup until page load to prioritize critical path
+        if (document.readyState === 'complete') {
+            setupComparisonLazyLoad();
         } else {
-            await new Promise(resolve => setTimeout(resolve, 0));
-            loadComparison();
+            window.addEventListener('load', setupComparisonLazyLoad, { once: true });
         }
     } catch (e) {
         console.error('Error rendering charts on load:', e);
