@@ -548,6 +548,7 @@ body {
     display: flex;
     gap: 8px;
     margin-bottom: 0.5rem;
+    position: relative;
 }
 .repo-search-wrapper input {
     margin-bottom: 0 !important;
@@ -566,6 +567,7 @@ body {
     justify-content: center;
     transition: all 0.2s;
     flex-shrink: 0;
+    transform: rotate(0deg);
 }
 .repo-toggle-btn:hover {
     background: #f1f5f9;
@@ -574,14 +576,18 @@ body {
 }
 
 #repoListContainer {
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    max-height: 240px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    max-height: 300px;
     overflow-y: auto;
-    margin-top: 8px;
-    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+    margin-top: 4px;
     background: #ffffff;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 }
 #repoListContainer:empty {
     display: none;
