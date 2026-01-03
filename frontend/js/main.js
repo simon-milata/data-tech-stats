@@ -55,10 +55,20 @@ const initCharts = async () => {
         
         renderLanguagesCountsChart(ranges[CHART_TYPES.LANGUAGES]);
 
-        // Yield again
-        await new Promise(resolve => setTimeout(resolve, 0));
-
-        initRepoComparisonChart();
+        // Lazy load comparison chart when it approaches viewport
+        const comparisonCard = document.querySelector('.graph-card[data-chart-type="comparison"]');
+        if (comparisonCard && 'IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    setTimeout(() => initRepoComparisonChart(), 0);
+                    observer.disconnect();
+                }
+            }, { rootMargin: '200px' });
+            observer.observe(comparisonCard);
+        } else {
+            await new Promise(resolve => setTimeout(resolve, 0));
+            initRepoComparisonChart();
+        }
     } catch (e) {
         console.error('Error rendering charts on load:', e);
     }
