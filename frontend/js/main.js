@@ -46,10 +46,22 @@ cards.forEach((card) => {
     });
 });
 
-try {
-    renderRepoCountsChart(null, null, ranges[CHART_TYPES.REPOS]);
-    renderLanguagesCountsChart(ranges[CHART_TYPES.LANGUAGES]);
-    initRepoComparisonChart();
-} catch (e) {
-    console.error('Error rendering charts on load:', e);
-}
+const initCharts = async () => {
+    try {
+        renderRepoCountsChart(null, null, ranges[CHART_TYPES.REPOS]);
+        
+        // Yield to main thread to break up long tasks
+        await new Promise(resolve => setTimeout(resolve, 0));
+        
+        renderLanguagesCountsChart(ranges[CHART_TYPES.LANGUAGES]);
+
+        // Yield again
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        initRepoComparisonChart();
+    } catch (e) {
+        console.error('Error rendering charts on load:', e);
+    }
+};
+
+initCharts();

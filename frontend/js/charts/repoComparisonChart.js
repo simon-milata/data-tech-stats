@@ -103,6 +103,8 @@ function renderOptions() {
 
     const canHover = window.matchMedia('(hover: hover)').matches;
 
+    const fragment = document.createDocumentFragment();
+
     filtered.forEach(repo => {
         const div = document.createElement('div');
         div.className = 'repo-option';
@@ -155,8 +157,9 @@ function renderOptions() {
         if (!maxReached) {
             div.onclick = () => toggleRepo(repo.id);
         }
-        repoListContainer.appendChild(div);
+        fragment.appendChild(div);
     });
+    repoListContainer.appendChild(fragment);
 
     if (allMatches.length > currentRenderLimit) {
         const infoDiv = document.createElement('div');
