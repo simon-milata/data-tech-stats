@@ -185,6 +185,7 @@ export function setupChartInteractions(canvas, getChartInstance) {
     let lastTouchTime = 0;
     let startX = 0;
     let startY = 0;
+    let rafId;
 
     const clearTooltip = () => {
         clearTimeout(pressTimer);
@@ -198,13 +199,22 @@ export function setupChartInteractions(canvas, getChartInstance) {
 
     const updateTooltip = (e) => {
         const chart = getChartInstance();
-        if (chart) {
+        if (!chart) return;
+
+        if (rafId) cancelAnimationFrame(rafId);
+
+        rafId = requestAnimationFrame(() => {
             const elements = chart.getElementsAtEventForMode(e, 'index', { intersect: false }, false);
-            if (elements.length) {
+            const activeElements = chart.tooltip.getActiveElements();
+            const hasChanged = elements.length !== activeElements.length ||
+                !elements.every((el, i) => el.datasetIndex === activeElements[i].datasetIndex && el.index === activeElements[i].index);
+
+            if (hasChanged) {
                 chart.tooltip.setActiveElements(elements);
                 chart.update();
             }
-        }
+            rafId = null;
+        });
     };
 
     canvas.addEventListener('touchstart', (e) => {
