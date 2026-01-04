@@ -35,7 +35,7 @@ export function formatWeekLabel(dateStr, range = 'weekly') {
     return isNaN(d) ? String(dateStr) : d.toLocaleDateString(undefined, optsMonthYear);
 }
 
-export function renderLegend(chart, container) {
+export function renderLegend(chart, container, onToggle) {
     if (!chart || !chart.data.datasets || !container) return;
     
     container.innerHTML = '';
@@ -54,6 +54,7 @@ export function renderLegend(chart, container) {
             chart.setDatasetVisibility(index, !currentlyVisible);
             chip.classList.toggle('active', !currentlyVisible);
             chart.update();
+            if (onToggle) onToggle(index, !currentlyVisible);
         };
 
         container.appendChild(chip);

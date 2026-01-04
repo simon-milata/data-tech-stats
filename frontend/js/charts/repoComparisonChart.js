@@ -9,6 +9,7 @@ const COLORS = [
 
 let allRepos = [];
 let selectedRepos = new Set();
+let hiddenRepos = new Set();
 let currentMetric = 'stars';
 let currentView = 'historical';
 let currentRange = 'weekly';
@@ -199,6 +200,7 @@ function setupSearch() {
 function toggleRepo(repoId) {
     if (selectedRepos.has(repoId)) {
         selectedRepos.delete(repoId);
+        hiddenRepos.delete(repoId);
     } else {
         if (selectedRepos.size >= MAX_SELECTION) return;
         selectedRepos.add(repoId);
@@ -343,7 +345,8 @@ async function updateChart() {
                 borderColor: COLORS[index % COLORS.length],
                 borderRadius: 4,
                 barPercentage: 0.7,
-                categoryPercentage: 0.8
+                categoryPercentage: 0.8,
+                hidden: hiddenRepos.has(repoId)
             };
         });
 
@@ -387,7 +390,11 @@ async function updateChart() {
                 }
             });
         }
-        renderLegend(chart, repoComparisonLegend);
+        renderLegend(chart, repoComparisonLegend, (index, isVisible) => {
+            const repoId = reposArray[index];
+            if (isVisible) hiddenRepos.delete(repoId);
+            else hiddenRepos.add(repoId);
+        });
         return;
     }
 
@@ -429,7 +436,8 @@ async function updateChart() {
             pointBorderColor: COLORS[index % COLORS.length],
             pointBorderWidth: 3.5,
             hitRadius: 8,
-            hoverBorderWidth: 3
+            hoverBorderWidth: 3,
+            hidden: hiddenRepos.has(repoId)
         };
     });
 
@@ -438,7 +446,11 @@ async function updateChart() {
         chart.data.labels = labels;
         chart.data.datasets = datasets;
         chart.update();
-        renderLegend(chart, repoComparisonLegend);
+        renderLegend(chart, repoComparisonLegend, (index, isVisible) => {
+            const repoId = reposArray[index];
+            if (isVisible) hiddenRepos.delete(repoId);
+            else hiddenRepos.add(repoId);
+        });
     } else {
         chart = new Chart(ctx, {
             type: 'line',
@@ -473,7 +485,11 @@ async function updateChart() {
                 }
             }
         });
-        renderLegend(chart, repoComparisonLegend);
+        renderLegend(chart, repoComparisonLegend, (index, isVisible) => {
+            const repoId = reposArray[index];
+            if (isVisible) hiddenRepos.delete(repoId);
+            else hiddenRepos.add(repoId);
+        });
     }
 }
 
