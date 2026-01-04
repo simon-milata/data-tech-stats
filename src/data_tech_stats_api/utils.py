@@ -31,7 +31,7 @@ def get_object(s3_client, bucket: str, key: str):
 
 
 def setup_logging(logging_level) -> None:
-    """Setups up the logging level and format for the logger running."""
+    """Sets up the logging level and format for the logger."""
     if running_on_lambda():
         logging.getLogger().setLevel(logging_level)
     else:
