@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 
 from .utils import get_latest_date_key, get_object, parse_parquet, save_data_to_s3
@@ -14,6 +15,7 @@ def get_repo_list_dict(df: pd.DataFrame, columns: list[str]) -> list[dict[str, s
 
 def get_repo_list(s3_client, bucket, keys: list[str]) -> list[dict[str, str | int]]:
     """Builds a list of tuples of repo names and IDs where last seen is the highest last seen"""
+    logging.info("Generating repo list.")
     latest_repos_key = get_latest_date_key(keys, "repos.parquet")
     repo_obj = get_object(s3_client, bucket, latest_repos_key)
     df = parse_parquet(repo_obj)

@@ -1,4 +1,5 @@
 import json
+import logging
 
 from .utils import (
     group_keys_by_interval, pick_latest_key_per_period, get_object, save_data_to_s3
@@ -6,6 +7,7 @@ from .utils import (
 
 
 def aggregate_repo_counts(s3_client, repo_count_keys, interval, settings):
+    logging.info(f"Aggregating repo counts for interval '{interval}'.")
     data = []
 
     grouped_keys = group_keys_by_interval(repo_count_keys, interval)
