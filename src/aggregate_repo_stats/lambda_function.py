@@ -1,12 +1,10 @@
 from .config import Settings
 from .utils import (
-    create_s3_client, running_on_lambda, get_all_objects, get_object_keys, filter_object_keys
+    create_s3_client, get_all_objects, get_object_keys, filter_object_keys
 )
 from .repo_counts import aggregate_repo_counts, save_agg_repo_counts
 from .repo_list import get_repo_list, save_repo_list
 from .process_repos import process_repos_data
-
-running_on_lambda = running_on_lambda()
 
 settings = Settings()
 
