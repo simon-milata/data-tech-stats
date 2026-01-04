@@ -47,15 +47,15 @@ def save_parquet_to_s3(s3_client, data: list[dict], bucket: str, path: str):
     pq.write_table(table, buffer, compression="snappy")
     buffer.seek(0)
 
-    logging.info(f"Uploading paruqet data to {path}.")
+    logging.info(f"Uploading parquet data to {path}.")
     s3_client.upload_fileobj(Bucket=bucket, Key=path, Fileobj=buffer)
-    logging.info(f"Succesfully uploaded paruqet data to {path}.")
+    logging.info(f"Successfully uploaded parquet data to {path}.")
 
 
 def save_json_to_s3(s3_client, data: list[dict], bucket: str, path: str):
     logging.info(f"Uploading JSON data to {path}.")
     s3_client.put_object(Bucket=bucket, Key=path, Body=json.dumps(data))
-    logging.info(f"Succesfully uploaded JSON data to {path}.")
+    logging.info(f"Successfully uploaded JSON data to {path}.")
 
 
 def setup_logging(logging_level) -> None:
@@ -67,11 +67,9 @@ def setup_logging(logging_level) -> None:
             level=logging_level, datefmt="%H:%M:%S",
             format="%(asctime)s - %(levelname)s - %(message)s"
         )
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("boto3").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("botocore").setLevel(logging.WARNING)
-    logging.getLogger("s3transfer").setLevel(logging.WARNING)
+
+    for logger_name in ["requests", "boto3", "urllib3", "botocore", "s3transfer"]:
+        logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
 def make_get_request(url: str, headers: dict, retries: int = 0, max_retries: int = 5) -> requests.Response:
@@ -85,7 +83,7 @@ def make_get_request(url: str, headers: dict, retries: int = 0, max_retries: int
         else:
             raise Exception(f"Max retries ({max_retries}) reached for '{url}'!")
     
-    logging.debug(f"Succesfully fetched data from '{url}'.")
+    logging.debug(f"Successfully fetched data from '{url}'.")
     return response
 
 
@@ -112,7 +110,7 @@ def transfrom_lang_data(language_data: dict) -> list[dict]:
     for row in language_data:
         language_data_long.extend(transform_lang_list_long(row))
 
-    logging.info("Succesfully transformed language data into long format.")
+    logging.info("Successfully transformed language data into long format.")
     return language_data_long
 
 

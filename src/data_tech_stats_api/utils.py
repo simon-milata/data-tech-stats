@@ -39,11 +39,9 @@ def setup_logging(logging_level) -> None:
             level=logging_level, datefmt="%H:%M:%S",
             format="%(asctime)s - %(levelname)s - %(message)s"
         )
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("boto3").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("botocore").setLevel(logging.WARNING)
-    logging.getLogger("s3transfer").setLevel(logging.WARNING)
+
+    for logger_name in ["requests", "boto3", "urllib3", "botocore", "s3transfer"]:
+        logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
 def timer(func):
