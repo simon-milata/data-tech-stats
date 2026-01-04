@@ -40,7 +40,7 @@ def setup_logging(logging_level) -> None:
 
 
 def get_all_objects(s3_client, bucket: str, prefix: str):
-    logging.debug(f"Listing objects in with prefix '{prefix}'.")
+    logging.debug(f"Listing objects with prefix '{prefix}'.")
     objects = s3_client.list_objects_v2(
         Bucket=bucket,
         Prefix=prefix

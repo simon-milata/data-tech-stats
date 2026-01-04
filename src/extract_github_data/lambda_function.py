@@ -22,6 +22,7 @@ setup_logging(settings.logging_level)
 
 
 def lambda_handler(event, context):
+    logging.info("Starting extraction lambda.")
     run_datetime = datetime.now()
 
     s3_client = create_s3_client(profile=settings.profile, region=settings.region)
@@ -50,6 +51,7 @@ def lambda_handler(event, context):
 
     counts_output_path = settings.get_repo_counts_path(run_datetime)
     save_json_to_s3(s3_client=s3_client, data=repo_counts, bucket=settings.bucket, path=counts_output_path)
+    logging.info("Extraction lambda finished.")
 
 
 if __name__ == "__main__":
