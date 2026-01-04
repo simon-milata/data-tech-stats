@@ -29,7 +29,7 @@ def lambda_handler(event, context):
     search_queries = get_search_queries(
         s3_client=s3_client, bucket=settings.bucket, path=search_queries_path
     )
-    logging.info(f"Search queries: {search_queries}")
+    logging.info(f"Search queries: {search_queries}.")
     data, repo_counts = get_all_repos_data(topics=search_queries, settings=settings)
     language_data = get_languages_data(data, settings=settings)
     data = deduplicate_repo_data(data)

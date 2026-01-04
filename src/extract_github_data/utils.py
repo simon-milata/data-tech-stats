@@ -39,21 +39,21 @@ def get_date_str(date_time: datetime) -> str:
 
 def save_parquet_to_s3(s3_client, data: list[dict], bucket: str, path: str):
     """Converts a list of dicts to a pyarrow table and saves it as a parquet file to S3."""
-    logging.info(f"Converting data to pyarrow table. Rows: {len(data)}.")
+    logging.debug(f"Converting data to pyarrow table. Rows: {len(data)}.")
     table = pa.Table.from_pylist(data)
 
     buffer = BytesIO()
-    logging.info("Writing pyarrow table to buffer.")
+    logging.debug("Writing pyarrow table to buffer.")
     pq.write_table(table, buffer, compression="snappy")
     buffer.seek(0)
 
-    logging.info(f"Uploading parquet data to {path}.")
+    logging.debug(f"Uploading parquet data to {path}.")
     s3_client.upload_fileobj(Bucket=bucket, Key=path, Fileobj=buffer)
     logging.info(f"Successfully uploaded parquet data to {path}.")
 
 
 def save_json_to_s3(s3_client, data: list[dict], bucket: str, path: str):
-    logging.info(f"Uploading JSON data to {path}.")
+    logging.debug(f"Uploading JSON data to {path}.")
     s3_client.put_object(Bucket=bucket, Key=path, Body=json.dumps(data))
     logging.info(f"Successfully uploaded JSON data to {path}.")
 
@@ -105,12 +105,12 @@ def transform_lang_list_long(language_data: dict) -> list[dict]:
 
 def transfrom_lang_data(language_data: dict) -> list[dict]:
     """Transforms language data rows into long format."""
-    logging.info("Transforming language data into long format.")
+    logging.debug("Transforming language data into long format.")
     language_data_long = []
     for row in language_data:
         language_data_long.extend(transform_lang_list_long(row))
 
-    logging.info("Successfully transformed language data into long format.")
+    logging.debug("Successfully transformed language data into long format.")
     return language_data_long
 
 

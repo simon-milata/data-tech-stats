@@ -96,7 +96,7 @@ def fetch_language_data(repo_data: list[dict], settings) -> list[dict]:
         })
         processed += 1
         if processed % log_every == 0 or processed == total:
-            logging.info(f"Succesfully fetched language data for {processed}/{total} repos.")
+            logging.info(f"Successfully fetched language data for {processed}/{total} repos.")
     return language_data
 
 

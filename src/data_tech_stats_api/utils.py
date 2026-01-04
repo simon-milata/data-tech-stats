@@ -52,7 +52,7 @@ def timer(func):
             return func(*args, **kwargs)
         finally:
             duration = time.perf_counter() - start
-            logging.debug(f"'{func.__name__}' took {duration:.2f}s")
+            logging.debug(f"'{func.__name__}' took {duration:.2f}s.")
     return wrapper
 
 
