@@ -40,14 +40,17 @@ export async function initRepoComparisonChart() {
             return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
         });
         
-        setupSelectionUI();
+        selectedContainer = document.getElementById('selectedReposContainer');
+        const toggleBtn = document.getElementById('repoListToggleBtn');
+        if (toggleBtn) {
+            toggleBtn.onclick = toggleRepoList;
+        }
 
         // Setup event listeners
         setupSearch();
         setupMetricSwitcher();
         setupRangeSwitcher();
         setupViewSwitcher();
-        moveMetricSwitcherToHeader();
         setupChartInteractions(ctx.canvas, () => chart);
         
         renderUI();
@@ -55,47 +58,6 @@ export async function initRepoComparisonChart() {
     } catch (err) {
         console.error('Failed to initialize comparison chart:', err);
     }
-}
-
-function setupSelectionUI() {
-    selectedContainer = document.createElement('div');
-    selectedContainer.id = 'selectedReposContainer';
-    repoSearch.parentNode.insertBefore(selectedContainer, repoSearch);
-    repoSearch.placeholder = "Search to add repositories...";
-
-    // Create wrapper for search input and toggle button
-    const wrapper = document.createElement('div');
-    wrapper.className = 'repo-search-wrapper';
-    wrapper.style.position = 'relative';
-    
-    repoSearch.parentNode.insertBefore(wrapper, repoSearch);
-    wrapper.appendChild(repoSearch);
-
-    if (repoListContainer) {
-        wrapper.appendChild(repoListContainer);
-        repoListContainer.style.position = 'absolute';
-        repoListContainer.style.top = '100%';
-        repoListContainer.style.left = '0';
-        repoListContainer.style.right = '0';
-        repoListContainer.style.zIndex = '50';
-        repoListContainer.style.maxHeight = '300px';
-        repoListContainer.style.overflowY = 'auto';
-        repoListContainer.style.borderRadius = '0.5rem';
-        repoListContainer.style.marginTop = '4px';
-    }
-
-    // Create toggle button
-    const toggleBtn = document.createElement('button');
-    toggleBtn.id = 'repoListToggleBtn';
-    toggleBtn.className = 'repo-toggle-btn';
-    toggleBtn.type = 'button';
-    toggleBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>`;
-    toggleBtn.title = "Toggle repository list";
-    toggleBtn.style.transform = 'rotate(180deg)'; // Initially open
-    
-    toggleBtn.onclick = toggleRepoList;
-    
-    wrapper.appendChild(toggleBtn);
 }
 
 function renderUI() {
@@ -140,6 +102,8 @@ function renderOptions() {
     }
 
     const canHover = window.matchMedia('(hover: hover)').matches;
+
+    const fragment = document.createDocumentFragment();
 
     filtered.forEach(repo => {
         const div = document.createElement('div');
@@ -193,8 +157,9 @@ function renderOptions() {
         if (!maxReached) {
             div.onclick = () => toggleRepo(repo.id);
         }
-        repoListContainer.appendChild(div);
+        fragment.appendChild(div);
     });
+    repoListContainer.appendChild(fragment);
 
     if (allMatches.length > currentRenderLimit) {
         const infoDiv = document.createElement('div');
@@ -306,24 +271,6 @@ function updateControlsVisibility() {
             child.style.pointerEvents = isComparison ? 'none' : 'auto';
         });
         metricSwitcher.style.display = 'inline-flex';
-    }
-}
-
-function moveMetricSwitcherToHeader() {
-    if (!metricSwitcher) return;
-    
-    const headerContainer = document.querySelector('.graph-card[data-chart-type="comparison"] .controls');
-    if (headerContainer) {
-        headerContainer.appendChild(metricSwitcher);
-        if (repoComparisonViewSwitcher) {
-            headerContainer.appendChild(repoComparisonViewSwitcher);
-        }
-        metricSwitcher.style.marginBottom = '0';
-        metricSwitcher.style.marginRight = '12px';
-        metricSwitcher.style.display = 'inline-flex';
-        metricSwitcher.style.alignItems = 'center';
-        metricSwitcher.style.verticalAlign = 'middle';
-        metricSwitcher.style.flexWrap = 'nowrap';
     }
 }
 

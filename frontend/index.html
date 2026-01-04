@@ -3,11 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>DataTechStats Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=optional" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="style.css">
+    <link rel="modulepreload" href="js/main.js">
+    <link rel="modulepreload" href="js/api.js">
+    <link rel="modulepreload" href="js/charts/chartUtils.js">
+    <link rel="modulepreload" href="js/charts/repoCountsChart.js">
+    <link rel="modulepreload" href="js/charts/languagesCountsChart.js">
     <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="js/config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+    <script src="js/config.js" defer></script>
 </head>
 <body>
     <header class="site-header">
@@ -67,6 +75,12 @@
                             <button class="range-btn active" data-view="historical">Historical</button>
                             <button class="range-btn" data-view="comparison">Comparison</button>
                         </div>
+                        <div class="metric-switcher range-switcher" id="metricSwitcher">
+                            <button class="metric-btn range-btn active" data-metric="stars">Stars</button>
+                            <button class="metric-btn range-btn" data-metric="size">Size</button>
+                            <button class="metric-btn range-btn" data-metric="forks">Forks</button>
+                            <button class="metric-btn range-btn" data-metric="open_issues">Open Issues</button>
+                        </div>
                         <div class="range-switcher" id="compRangeSwitcher" style="display: none;">
                             <button class="range-btn active" data-range="weekly">Weekly</button>
                             <button class="range-btn" data-range="monthly">Monthly</button>
@@ -74,15 +88,15 @@
                     </div>
                 </div>
                 <div class="comparison-controls">
-                    <div class="metric-switcher range-switcher" id="metricSwitcher">
-                        <button class="metric-btn range-btn active" data-metric="stars">Stars</button>
-                        <button class="metric-btn range-btn" data-metric="size">Size</button>
-                        <button class="metric-btn range-btn" data-metric="forks">Forks</button>
-                        <button class="metric-btn range-btn" data-metric="open_issues">Open Issues</button>
-                    </div>
                     <div class="repo-selector">
-                        <input type="text" id="repoSearch" placeholder="Search and select up to 5 repositories...">
-                        <div id="repoListContainer" class="repo-list-container"></div>
+                        <div id="selectedReposContainer"></div>
+                        <div class="repo-search-wrapper">
+                            <input type="text" id="repoSearch" placeholder="Search to add repositories...">
+                            <button id="repoListToggleBtn" class="repo-toggle-btn" type="button" title="Toggle repository list" style="transform: rotate(180deg);">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <div id="repoListContainer" class="repo-list-container"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="chart-wrap">

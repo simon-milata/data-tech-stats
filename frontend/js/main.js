@@ -1,6 +1,5 @@
 import { renderRepoCountsChart } from './charts/repoCountsChart.js';
 import { renderLanguagesCountsChart } from './charts/languagesCountsChart.js';
-import { initRepoComparisonChart } from './charts/repoComparisonChart.js';
 
 const CHART_TYPES = {
     REPOS: 'repos',
@@ -46,10 +45,45 @@ cards.forEach((card) => {
     });
 });
 
-try {
-    renderRepoCountsChart(null, null, ranges[CHART_TYPES.REPOS]);
-    renderLanguagesCountsChart(ranges[CHART_TYPES.LANGUAGES]);
-    initRepoComparisonChart();
-} catch (e) {
-    console.error('Error rendering charts on load:', e);
-}
+const initCharts = async () => {
+    try {
+        renderRepoCountsChart(null, null, ranges[CHART_TYPES.REPOS]);
+        
+        // Yield to main thread to break up long tasks
+        await new Promise(resolve => setTimeout(resolve, 0));
+        
+        renderLanguagesCountsChart(ranges[CHART_TYPES.LANGUAGES]);
+
+        const setupComparisonLazyLoad = () => {
+            const comparisonCard = document.querySelector('.graph-card[data-chart-type="comparison"]');
+            
+            const loadComparison = async () => {
+                const { initRepoComparisonChart } = await import('./charts/repoComparisonChart.js');
+                initRepoComparisonChart();
+            };
+
+            if (comparisonCard && 'IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        loadComparison();
+                        observer.disconnect();
+                    }
+                }, { rootMargin: '200px' });
+                observer.observe(comparisonCard);
+            } else {
+                setTimeout(loadComparison, 0);
+            }
+        };
+
+        // Defer observer setup until page load to prioritize critical path
+        if (document.readyState === 'complete') {
+            setupComparisonLazyLoad();
+        } else {
+            window.addEventListener('load', setupComparisonLazyLoad, { once: true });
+        }
+    } catch (e) {
+        console.error('Error rendering charts on load:', e);
+    }
+};
+
+initCharts();
