@@ -111,6 +111,7 @@ function renderOptions() {
         div.className = 'repo-option';
         if (maxReached) {
             div.classList.add('disabled');
+            div.style.cursor = 'default';
             div.title = `Max ${MAX_SELECTION} repositories selected`;
         }
 

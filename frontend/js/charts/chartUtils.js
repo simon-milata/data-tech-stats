@@ -193,6 +193,7 @@ export function setupChartInteractions(canvas, getChartInstance) {
         isLongPressActive = false;
         const chart = getChartInstance();
         if (chart) {
+            chart.setActiveElements([]);
             chart.tooltip.setActiveElements([], { x: 0, y: 0 });
             chart.update();
         }
@@ -211,6 +212,7 @@ export function setupChartInteractions(canvas, getChartInstance) {
                 !elements.every((el, i) => el.datasetIndex === activeElements[i].datasetIndex && el.index === activeElements[i].index);
 
             if (hasChanged) {
+                chart.setActiveElements(elements);
                 chart.tooltip.setActiveElements(elements);
                 chart.update();
             }

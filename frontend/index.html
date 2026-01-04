@@ -120,9 +120,12 @@
                 const MAX = 10;
                 items.forEach(item => {
                     if (!item.classList.contains('selected')) {
-                        item.classList.toggle('disabled', selectedCount >= MAX);
+                        const disabled = selectedCount >= MAX;
+                        item.classList.toggle('disabled', disabled);
+                        item.style.cursor = disabled ? 'default' : '';
                     } else {
                         item.classList.remove('disabled');
+                        item.style.cursor = '';
                     }
                 });
             };
