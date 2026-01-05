@@ -1,12 +1,12 @@
 import logging
 
-from .utils import (
+from agg_core.utils import (
     filter_object_keys, group_keys_by_interval, pick_latest_key_per_period,
     get_object, parse_parquet
 )
-from .primary_languages import get_primary_lang_counts, save_agg_primary_lang_counts
-from .repo_comparison import get_repo_comparison_data, save_agg_repo_comparison_data
-from .types import RepoComparisonAggData
+from agg_core.primary_languages import get_primary_lang_counts, save_agg_primary_lang_counts
+from agg_core.repo_comparison import get_repo_comparison_data, save_agg_repo_comparison_data
+from agg_core.types import RepoComparisonAggData
 
 
 def process_repos_data(s3_client, settings, keys, interval):

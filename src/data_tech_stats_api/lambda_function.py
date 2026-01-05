@@ -7,12 +7,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from mangum import Mangum
 
-from .config import Settings
-from .utils import (
+from api_core.config import Settings
+from api_core.utils import (
     create_s3_client, running_on_lambda, get_object, setup_logging, timer, get_seconds_until_midnight
 )
 
-running_on_lambda = running_on_lambda()
+is_lambda_env = running_on_lambda()
+
+if not is_lambda_env:
+    from dotenv import load_dotenv
+    load_dotenv()
 
 settings = Settings()
 setup_logging(settings.logging_level)
@@ -83,5 +87,5 @@ def get_repo_comparison_data(interval: Literal["weekly", "monthly"], response: R
 
 app.include_router(router)
 
-if running_on_lambda: 
+if is_lambda_env: 
     handler = Mangum(app)

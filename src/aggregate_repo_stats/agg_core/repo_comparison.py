@@ -1,7 +1,7 @@
 import pandas as pd
 
-from .utils import save_data_to_s3
-from .types import RepoComparisonAggData, RepoComparisonHistoryRecord, RepoId
+from agg_core.utils import save_data_to_s3
+from agg_core.types import RepoComparisonAggData, RepoComparisonHistoryRecord, RepoId
 
 
 def append_to_repo_history(repo_comparison_agg_data: RepoComparisonAggData, repo_id: RepoId, repo_name: str, record: RepoComparisonHistoryRecord):

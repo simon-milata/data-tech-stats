@@ -16,11 +16,7 @@ class Settings(BaseSettings):
     region: str = "eu-central-1"
     logging_level: str = "INFO"
     
-    model_config = {
-        "env_file": str(Path(__file__).parent / ".env"),
-        "env_file_encoding": "utf-8",
-    }
-
+    
     def get_search_queries_path(self) -> str:
         return f"{self.config_files_prefix}/search_queries.json"
 

@@ -1,7 +1,7 @@
 import json
 import logging
 
-from .utils import (
+from agg_core.utils import (
     group_keys_by_interval, pick_latest_key_per_period, get_object, save_data_to_s3
 )
 

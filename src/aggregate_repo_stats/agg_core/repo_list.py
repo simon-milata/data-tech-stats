@@ -1,7 +1,7 @@
 import logging
 import pandas as pd
 
-from .utils import get_latest_date_key, get_object, parse_parquet, save_data_to_s3
+from agg_core.utils import get_latest_date_key, get_object, parse_parquet, save_data_to_s3
 
 
 COLUMNS_TO_KEEP = ["id", "name", "stars"]

@@ -1,6 +1,6 @@
 import pandas as pd
 
-from aggregate_repo_stats.repo_list import get_repo_list_dict
+from aggregate_repo_stats.agg_core.repo_list import get_repo_list_dict
 
 
 def test_get_repo_list_dict():

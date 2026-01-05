@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from pydantic_settings import BaseSettings
 
 
@@ -12,10 +11,6 @@ class Settings(BaseSettings):
     region: str = "eu-central-1"
     logging_level: str = "INFO"
 
-    model_config = {
-        "env_file": str(Path(__file__).parent / ".env"),
-        "env_file_encoding": "utf-8",
-    }
 
     def get_repo_counts_path(self, interval: str) -> str:
         return f"{self.aggregated_data_prefix}/repo_counts/{interval}.json"

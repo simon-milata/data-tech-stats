@@ -1,15 +1,15 @@
 import logging
 from datetime import datetime
 
-from .utils import (
+from extract_core.utils import (
     running_on_lambda, create_s3_client, get_search_queries, save_parquet_to_s3,
     setup_logging, save_json_to_s3, transform_lang_data, get_s3_object
 )
-from .extract import (
+from extract_core.extract import (
     get_all_repos_data, deduplicate_repo_data, get_languages_data
 )
-from .config import Settings
-from .repo_registry import upsert_repo_registry
+from extract_core.config import Settings
+from extract_core.repo_registry import upsert_repo_registry
 
 
 if not running_on_lambda():

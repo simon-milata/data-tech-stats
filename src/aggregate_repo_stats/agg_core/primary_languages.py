@@ -1,6 +1,6 @@
 import pandas as pd
 
-from .utils import (
+from agg_core.utils import (
     save_data_to_s3
 )
 

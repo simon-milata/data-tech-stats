@@ -1,5 +1,5 @@
 import pandas as pd
-from aggregate_repo_stats.repo_comparison import append_to_repo_history, get_repo_comparison_data
+from aggregate_repo_stats.agg_core.repo_comparison import append_to_repo_history, get_repo_comparison_data
 
 
 def test_append_to_repo_history_new_repo():

@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from urllib import parse
 
-from .utils import running_on_lambda, make_get_request, get_scaled_delay
+from extract_core.utils import running_on_lambda, make_get_request, get_scaled_delay
 
 if not running_on_lambda():
     from dotenv import load_dotenv
