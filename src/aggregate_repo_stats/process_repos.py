@@ -1,3 +1,5 @@
+import logging
+
 from .utils import (
     filter_object_keys, group_keys_by_interval, pick_latest_key_per_period,
     get_object, parse_parquet
@@ -8,6 +10,8 @@ from .types import RepoComparisonAggData
 
 
 def process_repos_data(s3_client, settings, keys, interval):
+    logging.info(f"Processing repos data for interval '{interval}'.")
+
     repos_keys = filter_object_keys(keys, "repos.parquet")
     grouped_repos_keys = group_keys_by_interval(repos_keys, interval)
     top_repos_keys = pick_latest_key_per_period(grouped_repos_keys)

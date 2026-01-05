@@ -1,15 +1,19 @@
+import logging
+
 from .config import Settings
 from .utils import (
-    create_s3_client, get_all_objects, get_object_keys, filter_object_keys
+    setup_logging, create_s3_client, get_all_objects, get_object_keys, filter_object_keys
 )
 from .repo_counts import aggregate_repo_counts, save_agg_repo_counts
 from .repo_list import get_repo_list, save_repo_list
 from .process_repos import process_repos_data
 
 settings = Settings()
+setup_logging(settings.logging_level)
 
 
 def lambda_handler(event, context):
+    logging.info("Starting aggregation lambda.")
     s3_client = create_s3_client(settings.profile, settings.region)
 
     objects = get_all_objects(s3_client, settings.bucket, settings.github_data_prefix)
@@ -20,11 +24,14 @@ def lambda_handler(event, context):
 
     intervals = ["weekly", "monthly"]
     for interval in intervals:
+        logging.info(f"Processing interval '{interval}'.")
         repo_count_keys = filter_object_keys(keys, "repo_counts.json")
         repo_counts_data = aggregate_repo_counts(s3_client, repo_count_keys, interval, settings)
         save_agg_repo_counts(s3_client, settings, interval, repo_counts_data)
 
         process_repos_data(s3_client, settings, keys, interval)
+    
+    logging.info("Aggregation lambda finished.")
 
 
 if __name__ == "__main__":

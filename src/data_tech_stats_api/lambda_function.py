@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Literal
 
 from fastapi import FastAPI, APIRouter, Response
@@ -33,6 +34,7 @@ s3_client = create_s3_client(settings.profile, settings.region)
 @router.get("/repo-counts")
 @timer
 def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
+    logging.info(f"Fetching repo counts for interval '{interval}'.")
     data_path = settings.get_repo_counts_path(interval)
     obj = get_object(s3_client, settings.bucket, data_path)
     content = json.load(obj["Body"])
@@ -45,6 +47,7 @@ def get_repo_counts(interval: Literal["weekly", "monthly"], response: Response):
 @router.get("/primary-languages")
 @timer
 def get_primary_languages(interval: Literal["weekly", "monthly"], response: Response):
+    logging.info(f"Fetching primary languages for interval '{interval}'.")
     data_path = settings.get_primary_languages_path(interval)
     obj = get_object(s3_client, settings.bucket, data_path)
     content = json.load(obj["Body"])
@@ -57,6 +60,7 @@ def get_primary_languages(interval: Literal["weekly", "monthly"], response: Resp
 @router.get("/repo-list")
 @timer
 def get_repo_list(response: Response):
+    logging.info("Fetching repo list.")
     repo_list_path = settings.get_repo_list_path()
     repo_list_obj = get_object(s3_client, settings.bucket, repo_list_path)
     
@@ -68,6 +72,7 @@ def get_repo_list(response: Response):
 @router.get("/repo-comparison")
 @timer
 def get_repo_comparison_data(interval: Literal["weekly", "monthly"], response: Response):
+    logging.info(f"Fetching repo comparison data for interval '{interval}'.")
     repo_comparison_path = settings.get_repo_comparison_path(interval)
     repo_comparison_obj = get_object(s3_client, settings.bucket, repo_comparison_path)
 
