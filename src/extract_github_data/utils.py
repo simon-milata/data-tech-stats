@@ -103,7 +103,7 @@ def transform_lang_list_long(language_data: dict) -> list[dict]:
     return rows
 
 
-def transfrom_lang_data(language_data: dict) -> list[dict]:
+def transform_lang_data(language_data: dict) -> list[dict]:
     """Transforms language data rows into long format."""
     logging.debug("Transforming language data into long format.")
     language_data_long = []
