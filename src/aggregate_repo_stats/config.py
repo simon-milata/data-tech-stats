@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     github_data_prefix: str = "github_data"
     profile: str = "default"
     region: str = "eu-central-1"
+    logging_level: str = "INFO"
 
     model_config = {
         "env_file": str(Path(__file__).parent / ".env"),
