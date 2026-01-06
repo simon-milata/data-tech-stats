@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from aggregate_repo_stats.agg_core.utils import (
+from aggregate.agg_core.utils import (
     get_date_from_key, group_keys_by_interval, pick_latest_key_per_period,
     get_latest_date_key, get_iso_year_week
 )

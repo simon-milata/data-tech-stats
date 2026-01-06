@@ -1,6 +1,6 @@
 import pandas as pd
 
-from aggregate_repo_stats.agg_core.primary_languages import get_primary_lang_counts
+from aggregate.agg_core.primary_languages import get_primary_lang_counts
 
 
 def test_get_primary_lang_counts():

@@ -1,5 +1,5 @@
 from datetime import datetime
-from extract_github_data.extract_core.repo_registry import upsert_repo_registry
+from extract.extract_core.repo_registry import upsert_repo_registry
 
 
 def test_upsert_repo_registry_new_repo():

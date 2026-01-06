@@ -1,4 +1,4 @@
-from extract_github_data.extract_core.utils import transform_lang_list_long
+from extract.extract_core.utils import transform_lang_list_long
 
 
 def test_transform_lang_list_long_multiple_languages():
