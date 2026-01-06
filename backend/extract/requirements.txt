@@ -1,0 +1,4 @@
+pyarrow
+requests
+dotenv
+pydantic-settings
