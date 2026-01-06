@@ -1,9 +1,9 @@
 import logging
 
 from agg_core.utils import (
-    filter_object_keys, group_keys_by_interval, pick_latest_key_per_period,
-    get_object, parse_parquet
+    filter_object_keys, group_keys_by_interval, pick_latest_key_per_period, parse_parquet
 )
+from dts_utils.s3_utils import get_object
 from agg_core.primary_languages import get_primary_lang_counts, save_agg_primary_lang_counts
 from agg_core.repo_comparison import get_repo_comparison_data, save_agg_repo_comparison_data
 from agg_core.types import RepoComparisonAggData

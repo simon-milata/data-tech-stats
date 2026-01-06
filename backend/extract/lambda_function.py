@@ -1,9 +1,11 @@
 import logging
 from datetime import datetime
 
+from dts_utils.s3_utils import (
+    running_on_lambda, setup_logging, create_s3_client, get_json_object, save_data_to_s3
+)
 from extract_core.utils import (
-    running_on_lambda, create_s3_client, get_search_queries, save_parquet_to_s3,
-    setup_logging, save_json_to_s3, transform_lang_data, get_s3_object
+    get_search_queries, save_parquet_to_s3, transform_lang_data
 )
 from extract_core.extract import (
     get_all_repos_data, deduplicate_repo_data, get_languages_data
@@ -37,11 +39,10 @@ def lambda_handler(event, context):
 
     language_data_long = transform_lang_data(language_data)
 
-
     repo_registry_path = settings.get_repo_registry_path()
-    repo_registry_data = get_s3_object(s3_client, settings.bucket, repo_registry_path)
+    repo_registry_data = get_json_object(s3_client, settings.bucket, repo_registry_path)
     repo_registry_data = upsert_repo_registry(run_datetime, data, repo_registry_data)
-    save_json_to_s3(s3_client, repo_registry_data, settings.bucket, repo_registry_path)
+    save_data_to_s3(s3_client, settings.bucket, repo_registry_path, repo_registry_data)
 
     repos_output_path = settings.get_repos_path(run_datetime)
     save_parquet_to_s3(s3_client=s3_client, data=data, bucket=settings.bucket, path=repos_output_path)
@@ -50,7 +51,7 @@ def lambda_handler(event, context):
     save_parquet_to_s3(s3_client=s3_client, data=language_data_long, bucket=settings.bucket, path=languages_output_path)
 
     counts_output_path = settings.get_repo_counts_path(run_datetime)
-    save_json_to_s3(s3_client=s3_client, data=repo_counts, bucket=settings.bucket, path=counts_output_path)
+    save_data_to_s3(s3_client=s3_client, body=repo_counts, bucket=settings.bucket, path=counts_output_path)
     logging.info("Extraction lambda finished.")
 
 

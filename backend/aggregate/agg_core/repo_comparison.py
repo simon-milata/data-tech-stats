@@ -1,6 +1,6 @@
 import pandas as pd
 
-from agg_core.utils import save_data_to_s3
+from dts_utils.s3_utils import save_data_to_s3
 from agg_core.types import RepoComparisonAggData, RepoComparisonHistoryRecord, RepoId
 
 

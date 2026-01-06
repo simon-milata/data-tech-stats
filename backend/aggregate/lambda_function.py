@@ -1,9 +1,11 @@
 import logging
 
+from dts_utils.s3_utils import (
+    running_on_lambda, setup_logging, create_s3_client, get_all_objects
+)
 from agg_core.config import Settings
 from agg_core.utils import (
-    setup_logging, create_s3_client, get_all_objects, get_object_keys, filter_object_keys,
-    running_on_lambda
+    get_object_keys, filter_object_keys
 )
 from agg_core.repo_counts import aggregate_repo_counts, save_agg_repo_counts
 from agg_core.repo_list import get_repo_list, save_repo_list

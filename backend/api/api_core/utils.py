@@ -1,47 +1,7 @@
-import os
 from datetime import datetime, timedelta, timezone
 import time
 import logging
 import functools
-
-import boto3
-
-
-def running_on_lambda() -> bool:
-    return "AWS_LAMBDA_FUNCTION_NAME" in os.environ
-
-
-def create_boto3_session(profile: str = "default", region: str = None):
-    if running_on_lambda():
-        return boto3.Session(region_name=region)
-    return boto3.Session(profile_name=profile, region_name=region)
-
-
-def create_s3_client(profile: str = "default", region: str = None):
-    session = create_boto3_session(profile=profile, region=region)
-    return session.client("s3")
-
-
-def get_object(s3_client, bucket: str, key: str):
-    obj = s3_client.get_object(
-        Bucket=bucket,
-        Key=key
-    )
-    return obj
-
-
-def setup_logging(logging_level) -> None:
-    """Sets up the logging level and format for the logger."""
-    if running_on_lambda():
-        logging.getLogger().setLevel(logging_level)
-    else:
-        logging.basicConfig(
-            level=logging_level, datefmt="%H:%M:%S",
-            format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-
-    for logger_name in ["requests", "boto3", "urllib3", "botocore", "s3transfer"]:
-        logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
 def timer(func):
