@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic_settings import BaseSettings
 
 
@@ -13,10 +11,6 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://127.0.0.1:5500"
     api_prefix: str = ""
 
-    model_config = {
-        "env_file": str(Path(__file__).parent / ".env"),
-        "env_file_encoding": "utf-8",
-    }
 
     def get_repo_list_path(self):
         return f"{self.aggregated_data_prefix}/repo_list/repo_list.json"

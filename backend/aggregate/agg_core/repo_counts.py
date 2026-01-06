@@ -1,9 +1,7 @@
-import json
 import logging
 
-from .utils import (
-    group_keys_by_interval, pick_latest_key_per_period, get_object, save_data_to_s3
-)
+from agg_core.utils import group_keys_by_interval, pick_latest_key_per_period
+from dts_utils.s3_utils import get_json_object, save_data_to_s3
 
 
 def aggregate_repo_counts(s3_client, repo_count_keys, interval, settings):
@@ -14,8 +12,7 @@ def aggregate_repo_counts(s3_client, repo_count_keys, interval, settings):
     top_keys = pick_latest_key_per_period(grouped_keys)
 
     for key, value in top_keys.items():
-        obj = get_object(s3_client, settings.bucket, value)
-        content = json.load(obj["Body"])
+        content = get_json_object(s3_client, settings.bucket, value)
         data.append({"date": key, "counts": content})
 
     return data

@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend/layers/common_layer/python"
+    ],
+}

@@ -1,4 +1,4 @@
-from extract_github_data.extract import parse_repo_data, keep_n_repos_per_topic
+from extract.extract_core.extract import parse_repo_data, keep_n_repos_per_topic
 
 
 def test_parse_repo_data_basic():

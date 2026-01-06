@@ -1,35 +1,18 @@
-import os
-import json
 from io import BytesIO
 from datetime import datetime
 import logging
 import requests
 import time
 
-import boto3
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-
-def running_on_lambda() -> bool:
-    return "AWS_LAMBDA_FUNCTION_NAME" in os.environ
-
-
-def create_boto3_session(profile: str = "default", region: str = None):
-    if running_on_lambda():
-        return boto3.Session(region_name=region)
-    return boto3.Session(profile_name=profile, region_name=region)
-
-
-def create_s3_client(profile: str = "default", region: str = None):
-    session = create_boto3_session(profile=profile, region=region)
-    return session.client("s3")
+from dts_utils.s3_utils import get_json_object
 
 
 def get_search_queries(s3_client, bucket: str, path: str) -> list[str]:
     """Fetches a list of topics to search in API."""
-    body = s3_client.get_object(Bucket=bucket, Key=path)["Body"]
-    return json.load(body)
+    return get_json_object(s3_client, bucket, path)
 
 
 def get_date_str(date_time: datetime) -> str:
@@ -50,26 +33,6 @@ def save_parquet_to_s3(s3_client, data: list[dict], bucket: str, path: str):
     logging.info(f"Uploading parquet data to {path}.")
     s3_client.upload_fileobj(Bucket=bucket, Key=path, Fileobj=buffer)
     logging.debug(f"Successfully uploaded parquet data to {path}.")
-
-
-def save_json_to_s3(s3_client, data: list[dict], bucket: str, path: str):
-    logging.info(f"Uploading JSON data to {path}.")
-    s3_client.put_object(Bucket=bucket, Key=path, Body=json.dumps(data))
-    logging.debug(f"Successfully uploaded JSON data to {path}.")
-
-
-def setup_logging(logging_level) -> None:
-    """Sets up the logging level and format for the logger."""
-    if running_on_lambda():
-        logging.getLogger().setLevel(logging_level)
-    else:
-        logging.basicConfig(
-            level=logging_level, datefmt="%H:%M:%S",
-            format="%(asctime)s - %(levelname)s - %(message)s"
-        )
-
-    for logger_name in ["requests", "boto3", "urllib3", "botocore", "s3transfer"]:
-        logging.getLogger(logger_name).setLevel(logging.WARNING)
 
 
 def make_get_request(url: str, headers: dict, retries: int = 0, max_retries: int = 5) -> requests.Response:
@@ -122,14 +85,3 @@ def get_scaled_delay(per_page, max_delay=3.0, min_delay=0.0, max_per_page=100):
     factor = 1 - (per_page / max_per_page)
     delay = min_delay + factor * (max_delay - min_delay)
     return delay
-    
-
-def get_s3_object(s3_client, bucket, path):
-    try:
-        s3_object = s3_client.get_object(
-            Bucket=bucket,
-            Key=path
-        )
-        return json.load(s3_object["Body"])
-    except s3_client.exceptions.NoSuchKey:
-        return {}

@@ -1,12 +1,19 @@
 import logging
 
-from .config import Settings
-from .utils import (
-    setup_logging, create_s3_client, get_all_objects, get_object_keys, filter_object_keys
+from dts_utils.s3_utils import (
+    running_on_lambda, setup_logging, create_s3_client, get_all_objects
 )
-from .repo_counts import aggregate_repo_counts, save_agg_repo_counts
-from .repo_list import get_repo_list, save_repo_list
-from .process_repos import process_repos_data
+from agg_core.config import Settings
+from agg_core.utils import (
+    get_object_keys, filter_object_keys
+)
+from agg_core.repo_counts import aggregate_repo_counts, save_agg_repo_counts
+from agg_core.repo_list import get_repo_list, save_repo_list
+from agg_core.process_repos import process_repos_data
+
+if not running_on_lambda():
+    from dotenv import load_dotenv
+    load_dotenv()
 
 settings = Settings()
 setup_logging(settings.logging_level)

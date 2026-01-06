@@ -1,8 +1,6 @@
 import pandas as pd
 
-from .utils import (
-    save_data_to_s3
-)
+from dts_utils.s3_utils import save_data_to_s3
 
 
 def get_primary_lang_counts(df: pd.DataFrame) -> dict[str, int]:
