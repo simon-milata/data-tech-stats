@@ -41,7 +41,26 @@ export function renderLegend(chart, container, onToggle) {
     container.innerHTML = '';
     container.removeAttribute('style');
     
-    chart.data.datasets.forEach((dataset, index) => {
+    const legendItems = chart.data.datasets.map((dataset, index) => ({
+        dataset,
+        index
+    }));
+
+    if (chart.config.type === 'line') {
+        legendItems.sort((a, b) => {
+            const getLast = (ds) => {
+                const data = ds.data;
+                if (!data || !data.length) return 0;
+                for (let i = data.length - 1; i >= 0; i--) {
+                    if (data[i] !== null && data[i] !== undefined) return data[i];
+                }
+                return 0;
+            };
+            return getLast(b.dataset) - getLast(a.dataset);
+        });
+    }
+
+    legendItems.forEach(({ dataset, index }) => {
         const chip = document.createElement('button');
         chip.type = 'button';
         const isVisible = chart.isDatasetVisible(index);
