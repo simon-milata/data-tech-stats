@@ -2,16 +2,16 @@
 
 **Live Demo:** https://dts.simonmilata.com/
 
-A serverless system that collects, aggregates, and exposes historical GitHub statistics for data-related repositories.
+A serverless system that collects, aggregates, and visualizes historical GitHub statistics for data-related repositories.
 The project focuses on end-to-end API design, serverless architecture, and cost-constrained cloud deployment.
 
 ## Project goals
 
-- Build and deploy a real public API
-- Practice API design with FastAPI and AWS API Gateway
-- Implement a simple but realistic data ingestion and aggregation pipeline
-- Keep the entire system free or as close to free as possible
-- Understand architectural tradeoffs in a small production system
+- Deploy a public-facing API using FastAPI and AWS API Gateway.
+- Build an interactive frontend to visualize historical trends.
+- Implement a simple but realistic data ingestion and aggregation pipeline.
+- Keep the entire system free or as close to free as possible.
+- Understand architectural tradeoffs in a small production system.
 
 ## High-level architecture
 ### ETL pipeline
@@ -75,3 +75,4 @@ The project focuses on end-to-end API design, serverless architecture, and cost-
 
 ## Frontend
 This is a backend-centric project. The UI was developed using AI assistance for speed and layout, allowing me to focus on the serverless architecture, data pipeline efficiency, and S3-based analytical storage.
+
