@@ -77,7 +77,10 @@ export async function getRepoList(range = 'weekly') {
             id: id,
             // Fallback to ID if name is missing in the comparison data
             name: repoData.name || id,
-            stars: latest.stars || 0
+            stars: latest.stars || 0,
+            forks: latest.forks || 0,
+            open_issues: latest.open_issues || 0,
+            size: latest.size || 0
         };
     });
 }

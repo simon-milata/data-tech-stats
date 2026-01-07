@@ -503,9 +503,17 @@ function createTooltip() {
 
 function showTooltip(e, repo) {
     createTooltip();
+    let forks = repo.forks ?? 0;
+    let issues = repo.open_issues ?? 0;
+    let size = repo.size ?? 0;
+    let stars = repo.stars ?? 0;
+
     tooltipEl.innerHTML = `
         <div class="tt-row"><span class="tt-label">ID:</span> <span class="tt-val">${repo.id}</span></div>
-        <div class="tt-row"><span class="tt-label">Stars:</span> <span class="tt-val">${repo.stars ? repo.stars.toLocaleString() : 0}</span></div>
+        <div class="tt-row"><span class="tt-label">Stars:</span> <span class="tt-val">${Number(stars).toLocaleString()}</span></div>
+        <div class="tt-row"><span class="tt-label">Forks:</span> <span class="tt-val">${Number(forks).toLocaleString()}</span></div>
+        <div class="tt-row"><span class="tt-label">Size:</span> <span class="tt-val">${formatSize(size)}</span></div>
+        <div class="tt-row"><span class="tt-label">Issues:</span> <span class="tt-val">${Number(issues).toLocaleString()}</span></div>
     `;
     tooltipEl.style.display = 'block';
     moveTooltip(e);
@@ -519,4 +527,12 @@ function moveTooltip(e) {
 
 function hideTooltip() {
     if (tooltipEl) tooltipEl.style.display = 'none';
+}
+
+function formatSize(kb) {
+    const val = Number(kb);
+    if (!val) return '0 KB';
+    if (val >= 1024 * 1024) return (val / (1024 * 1024)).toFixed(1) + ' GB';
+    if (val >= 1024) return (val / 1024).toFixed(1) + ' MB';
+    return Math.round(val).toLocaleString() + ' KB';
 }
