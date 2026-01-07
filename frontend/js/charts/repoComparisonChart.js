@@ -355,6 +355,10 @@ async function updateChart() {
             chart.options.events = [];
             chart.data.labels = metricLabels;
             chart.data.datasets = datasets;
+            chart.options.valueFormatter = (v, dp) => {
+                if (dp && dp.label === 'Size') return formatSize(v);
+                return Number(v).toLocaleString();
+            };
             chart.update();
         } else {
             chart = new Chart(ctx, {
@@ -364,6 +368,10 @@ async function updateChart() {
                     events: [],
                     responsive: true,
                     maintainAspectRatio: false,
+                    valueFormatter: (v, dp) => {
+                        if (dp && dp.label === 'Size') return formatSize(v);
+                        return Number(v).toLocaleString();
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: { enabled: false, external: externalTooltip }
@@ -442,10 +450,29 @@ async function updateChart() {
         };
     });
 
+    let maxValue = 0;
+    if (currentMetric === 'size') {
+        datasets.forEach(ds => {
+            ds.data.forEach(d => {
+                if (d !== null && d > maxValue) maxValue = d;
+            });
+        });
+    }
+
     if (chart) {
         chart.options.events = [];
         chart.data.labels = labels;
         chart.data.datasets = datasets;
+        chart.options.valueFormatter = (v) => {
+            if (currentMetric === 'size') return formatSize(v);
+            return Number(v).toLocaleString();
+        };
+        if (chart.options.scales.y) {
+            chart.options.scales.y.ticks.callback = v => {
+                if (currentMetric === 'size') return formatSize(v, maxValue);
+                return v >= 1000 ? Math.round(v/1000)+'k' : v;
+            };
+        }
         chart.update();
         renderLegend(chart, repoComparisonLegend, (index, isVisible) => {
             const repoId = reposArray[index];
@@ -463,6 +490,10 @@ async function updateChart() {
                 events: [],
                 responsive: true,
                 maintainAspectRatio: false,
+                valueFormatter: (v) => {
+                    if (currentMetric === 'size') return formatSize(v);
+                    return Number(v).toLocaleString();
+                },
                 interaction: {
                     mode: 'index',
                     axis: 'x',
@@ -481,7 +512,13 @@ async function updateChart() {
                     },
                     y: {
                         grid: { color: 'rgba(147,155,166,0.06)' },
-                        ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v/1000)+'k' : v }
+                        ticks: { 
+                            color: '#94a3b8', 
+                            callback: v => {
+                                if (currentMetric === 'size') return formatSize(v, maxValue);
+                                return v >= 1000 ? Math.round(v/1000)+'k' : v;
+                            }
+                        }
                     }
                 }
             }
@@ -529,10 +566,21 @@ function hideTooltip() {
     if (tooltipEl) tooltipEl.style.display = 'none';
 }
 
-function formatSize(kb) {
+function formatSize(kb, topValue = 0) {
     const val = Number(kb);
     if (!val) return '0 KB';
-    if (val >= 1024 * 1024) return (val / (1024 * 1024)).toFixed(1) + ' GB';
-    if (val >= 1024) return (val / 1024).toFixed(1) + ' MB';
+    
+    const GB = 1024 * 1024;
+    const MB = 1024;
+
+    if (topValue >= GB && val >= 0.1 * GB) {
+        return (val / GB).toFixed(1) + ' GB';
+    }
+
+    if (val >= GB) return (val / GB).toFixed(1) + ' GB';
+    if (val >= MB) {
+        const mb = val / MB;
+        return (mb >= 100 ? mb.toFixed(0) : mb.toFixed(1)) + ' MB';
+    }
     return Math.round(val).toLocaleString() + ' KB';
 }

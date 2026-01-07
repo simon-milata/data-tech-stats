@@ -117,12 +117,17 @@ export function externalTooltip(context) {
             }
             const color = (dp.dataset && (dp.dataset.borderColor || dp.dataset.backgroundColor)) || '#000';
 
+            let formattedValue = Number(v).toLocaleString();
+            if (chart.config.options.valueFormatter) {
+                formattedValue = chart.config.options.valueFormatter(v, dp);
+            }
+
             const row = document.createElement('div');
             row.className = 'tt-line';
             row.innerHTML = `
                 <span class="tt-dot" style="background:${color};"></span>
                 <span class="tt-name" style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;">${name}</span>
-                <span class="tt-val">${Number(v).toLocaleString()}</span>
+                <span class="tt-val">${formattedValue}</span>
             `;
             valuesEl.appendChild(row);
         });
