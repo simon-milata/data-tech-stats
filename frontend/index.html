@@ -38,6 +38,10 @@
                 <div class="card-top">
                     <h2>Total Repositories by Topic</h2>
                     <div class="controls">
+                        <div id="repoViewSwitcher" class="range-switcher" style="margin-right: 12px;">
+                            <button class="range-btn active" data-view="historical">Historical</button>
+                            <button class="range-btn" data-view="comparison">Comparison</button>
+                        </div>
                         <div class="range-switcher" role="tablist" aria-label="Range selector" style="display: none;">
                             <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
                             <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
@@ -54,6 +58,10 @@
                 <div class="card-top">
                     <h2>Main Languages of Repositories</h2>
                     <div class="controls">
+                        <div id="languagesViewSwitcher" class="range-switcher" style="margin-right: 12px;">
+                            <button class="range-btn active" data-view="historical">Historical</button>
+                            <button class="range-btn" data-view="comparison">Comparison</button>
+                        </div>
                         <div id="languageSelectorContainer"></div>
                         <div class="range-switcher" role="tablist" aria-label="Range selector" style="display: none;">
                             <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>

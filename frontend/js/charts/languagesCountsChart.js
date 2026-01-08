@@ -5,6 +5,8 @@ let langChartInstance = null;
 let allLanguagesWithCounts = [];
 let rawLanguageData = {};
 let isInitializing = false;
+let currentView = 'historical';
+let globalLabels = [];
 
 const colors = [
     '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444',
@@ -109,11 +111,104 @@ function updateLimitMessage(popup) {
     }
 }
 
+function setupViewSwitcher() {
+    const switcher = document.getElementById('languagesViewSwitcher');
+    if (!switcher) return;
+    if (switcher.dataset.listenerAttached) return;
+    switcher.dataset.listenerAttached = 'true';
+
+    switcher.addEventListener('click', (e) => {
+        if (e.target.classList.contains('range-btn')) {
+            switcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            const newView = e.target.dataset.view;
+            if (currentView !== newView) {
+                currentView = newView;
+                updateLanguagesChart();
+            }
+        }
+    });
+}
+
 function updateLanguagesChart() {
-    if (!langChartInstance) return;
+    const canvas = document.querySelector('#languagesCountsChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (langChartInstance) {
+        const isBar = langChartInstance.config.type === 'bar';
+        const wantBar = currentView === 'comparison';
+        if (isBar !== wantBar) {
+            langChartInstance.destroy();
+            langChartInstance = null;
+        }
+    }
 
     const selectedLangs = getSelectedLanguages();
-    const newDatasets = selectedLangs.map((lang) => {
+
+    if (currentView === 'comparison') {
+        const sortedLangs = selectedLangs.map(lang => {
+            const langObj = allLanguagesWithCounts.find(l => l.lang === lang);
+            return { lang, count: langObj ? langObj.count : 0 };
+        }).sort((a, b) => b.count - a.count);
+
+        const datasets = sortedLangs.map((item) => {
+            const lang = item.lang;
+            const count = item.count;
+            const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
+            const color = colors[langIndex % colors.length];
+
+            return {
+                label: lang,
+                data: [count],
+                backgroundColor: color,
+                borderColor: color,
+                borderRadius: 4,
+                barPercentage: 0.8,
+                categoryPercentage: 1.0
+            };
+        });
+
+        if (langChartInstance) {
+            langChartInstance.data.labels = ['Latest Count'];
+            langChartInstance.data.datasets = datasets;
+            langChartInstance.update();
+        } else {
+            langChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Latest Count'],
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false, external: externalTooltip }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(147,155,166,0.06)' },
+                            ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v / 1000) + 'k' : v }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    }
+                }
+            });
+            setupChartInteractions(canvas, () => langChartInstance);
+        }
+    } else {
+        const newDatasets = selectedLangs.map((lang) => {
         const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
         const color = colors[langIndex % colors.length];
         const langData = rawLanguageData[lang] || [];
@@ -136,8 +231,35 @@ function updateLanguagesChart() {
         };
     });
 
-    langChartInstance.data.datasets = newDatasets;
-    langChartInstance.update();
+        if (langChartInstance) {
+            langChartInstance.data.labels = globalLabels;
+            langChartInstance.data.datasets = newDatasets;
+            langChartInstance.update();
+        } else {
+            langChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: globalLabels,
+                    datasets: newDatasets
+                },
+                options: {
+                    events: [],
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v / 1000) + 'k' : v } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false, external: externalTooltip }
+                    },
+                    interaction: { mode: 'index', axis: 'x', intersect: false }
+                }
+            });
+            setupChartInteractions(canvas, () => langChartInstance);
+        }
+    }
     renderLegend(langChartInstance, document.getElementById('languagesLegend'));
 }
 
@@ -145,7 +267,7 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
     const data = await getLanguagesTimeseries(range);
     if (!data || !data.length) return;
 
-    const labels = data.map(d => formatWeekLabel(d.date, range));
+    globalLabels = data.map(d => formatWeekLabel(d.date, range));
     const sample = data[data.length - 1];
     const countsObj = sample.counts || {};
     const allLanguages = Object.keys(countsObj);
@@ -163,66 +285,7 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
         count: countsObj[lang] || 0
     })).sort((a, b) => (b.count - a.count));
 
-    const topLanguages = allLanguagesWithCounts.slice(0, 10).map(l => l.lang);
-    const datasets = topLanguages.map((lang) => {
-        const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
-        const color = colors[langIndex % colors.length];
-        return {
-            label: lang,
-            data: rawLanguageData[lang],
-            borderColor: color,
-            backgroundColor: color + '22',
-            fill: false,
-            tension: 0.36,
-            borderWidth: 3.5,
-            pointRadius: 6,
-            pointHoverRadius: 8,
-            pointBackgroundColor: '#ffffff',
-            pointBorderColor: color,
-            pointBorderWidth: 3.5,
-            hitRadius: 8,
-            hoverBorderWidth: 3
-        };
-    });
-
-    const canvas = document.querySelector('#languagesCountsChart');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    const config = {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        options: {
-            events: [],
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                y: { grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v / 1000) + 'k' : v } }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: false, external: externalTooltip }
-            },
-            interaction: { mode: 'index', axis: 'x', intersect: false }
-        }
-    };
-
-    if (langChartInstance) {
-        langChartInstance.options.events = [];
-        langChartInstance.data.labels = labels;
-        langChartInstance.data.datasets = datasets;
-        langChartInstance.update();
-        renderSelector();
-        renderLegend(langChartInstance, document.getElementById('languagesLegend'));
-        return;
-    }
-
-    langChartInstance = new Chart(ctx, config);
-    setupChartInteractions(canvas, () => langChartInstance);
     renderSelector();
-    renderLegend(langChartInstance, document.getElementById('languagesLegend'));
+    setupViewSwitcher();
+    updateLanguagesChart();
 }

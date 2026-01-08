@@ -2,11 +2,149 @@ import { getRepoCountsByTopic } from '../api.js';
 import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate, setupChartInteractions } from './chartUtils.js';
 
 let chart = null;
+let currentView = 'historical';
+let lastLabels = [];
+let lastSortedData = [];
+let lastTopics = [];
+
 const colors = [
     '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444', '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
 ];
 
 function toReadableKey(k){ return k.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+
+function setupViewSwitcher() {
+    const switcher = document.getElementById('repoViewSwitcher');
+    if (!switcher) return;
+    if (switcher.dataset.listenerAttached) return;
+    switcher.dataset.listenerAttached = 'true';
+
+    switcher.addEventListener('click', (e) => {
+        if (e.target.classList.contains('range-btn')) {
+            switcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            const newView = e.target.dataset.view;
+            if (currentView !== newView) {
+                currentView = newView;
+                updateChart();
+            }
+        }
+    });
+}
+
+function updateChart() {
+    const canvas = document.getElementById('repoCountsChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+
+    if (chart) {
+        const isBar = chart.config.type === 'bar';
+        const wantBar = currentView === 'comparison';
+        if (isBar !== wantBar) {
+            chart.destroy();
+            chart = null;
+        }
+    }
+
+    if (currentView === 'comparison') {
+        const newest = lastSortedData[lastSortedData.length - 1] || {};
+        
+        const sortedTopics = lastTopics.map((t, i) => {
+            let val = 0;
+            if (newest.counts && typeof newest.counts[t] !== 'undefined') val = Number(newest.counts[t] || 0);
+            else if (typeof newest[t] !== 'undefined') val = Number(newest[t] || 0);
+            return { t, val, originalIndex: i };
+        }).sort((a, b) => b.val - a.val);
+
+        const datasets = sortedTopics.map((item) => {
+            return {
+                label: toReadableKey(item.t),
+                data: [item.val],
+                backgroundColor: colors[item.originalIndex % colors.length],
+                borderColor: colors[item.originalIndex % colors.length],
+                borderRadius: 4,
+                barPercentage: 0.8,
+                categoryPercentage: 1.0
+            };
+        });
+
+        if (chart) {
+            chart.data.labels = ['Latest Count'];
+            chart.data.datasets = datasets;
+            chart.update();
+        } else {
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: ['Latest Count'], datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false,
+                    },
+                    plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v/1000)+'k' : v } },
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+            setupChartInteractions(canvas, () => chart);
+        }
+    } else {
+        const datasets = lastTopics.map((t,i) => ({
+            label: toReadableKey(t),
+            data: lastSortedData.map(d => {
+                if (d.counts && typeof d.counts[t] !== 'undefined') return Number(d.counts[t] || 0);
+                if (typeof d[t] !== 'undefined') return Number(d[t] || 0);
+                return 0;
+            }),
+            borderColor: colors[i % colors.length],
+            backgroundColor: colors[i % colors.length] + '22',
+            fill: false,
+            tension: 0.36,
+            borderWidth: 3.5,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            pointBackgroundColor: '#ffffff',
+            pointBorderColor: colors[i % colors.length],
+            pointBorderWidth: 3.5,
+            hitRadius: 8,
+            hoverBorderWidth: 3
+        }));
+
+        if (chart) {
+            chart.data.labels = lastLabels;
+            chart.data.datasets = datasets;
+            chart.update();
+        } else {
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: lastLabels, datasets },
+                options: {
+                    events: [],
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v/1000)+'k' : v } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false, external: externalTooltip }
+                    },
+                    interaction: { mode: 'index', axis: 'x', intersect: false }
+                }
+            });
+            setupChartInteractions(canvas, () => chart);
+        }
+    }
+    
+    const dropdown = document.getElementById('repoTopicFilters');
+    if (!dropdown) renderLegend(chart, document.getElementById('repoLegend'));
+}
 
 export async function renderRepoCountsChart(selectedTopics = null, onSummary, range = 'weekly') {
     const raw = await getRepoCountsByTopic(range);
@@ -27,66 +165,12 @@ export async function renderRepoCountsChart(selectedTopics = null, onSummary, ra
     const allKeys = Object.keys(countsObj);
     const topics = selectedTopics && selectedTopics.length ? selectedTopics : allKeys;
 
-    const datasets = topics.map((t,i) => ({
-        label: toReadableKey(t),
-        data: sorted.map(d => {
-            if (d.counts && typeof d.counts[t] !== 'undefined') return Number(d.counts[t] || 0);
-            if (typeof d[t] !== 'undefined') return Number(d[t] || 0);
-            return 0;
-        }),
-        borderColor: colors[i % colors.length],
-        backgroundColor: colors[i % colors.length] + '22',
-        fill: false,
-        tension: 0.36,
-        borderWidth: 3.5,
-        pointRadius: 6,
-        pointHoverRadius: 8,
-        pointBackgroundColor: '#ffffff',
-        pointBorderColor: colors[i % colors.length],
-        pointBorderWidth: 3.5,
-        hitRadius: 8,
-        hoverBorderWidth: 3
-    }));
+    lastSortedData = sorted;
+    lastLabels = labels;
+    lastTopics = topics;
 
-    const ctx = document.getElementById('repoCountsChart').getContext('2d');
-
-    const config = {
-        type: 'line',
-        data: { labels, datasets },
-        options: {
-            events: [],
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                y: { grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v/1000)+'k' : v } }
-            },
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: false, external: externalTooltip }
-            },
-            interaction: { mode: 'index', axis: 'x', intersect: false }
-        }
-    };
-
-    if (chart) {
-        chart.options.events = [];
-        chart.data.labels = labels;
-        chart.data.datasets = datasets;
-        chart.update();
-        
-        const dropdown = document.getElementById('repoTopicFilters');
-        if (!dropdown) renderLegend(chart, document.getElementById('repoLegend'));
-        
-        if (typeof onSummary === 'function') onSummary(computeSummary(sorted, topics));
-        return;
-    }
-
-    chart = new Chart(ctx, config);
-    setupChartInteractions(ctx.canvas, () => chart);
-    
-    const dropdown = document.getElementById('repoTopicFilters');
-    if (!dropdown) renderLegend(chart, document.getElementById('repoLegend'));
+    setupViewSwitcher();
+    updateChart();
     
     if (typeof onSummary === 'function') onSummary(computeSummary(sorted, topics));
 }

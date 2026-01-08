@@ -211,7 +211,6 @@ body {
 #languageSelectorContainer {
     display: flex;
     align-items: center;
-    margin-left: auto;
 }
 
 .language-selector-wrapper {
