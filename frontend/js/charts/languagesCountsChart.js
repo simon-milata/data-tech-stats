@@ -136,9 +136,9 @@ function updateLanguagesChart() {
     const ctx = canvas.getContext('2d');
 
     if (langChartInstance) {
-        const isBar = langChartInstance.config.type === 'bar';
-        const wantBar = currentView === 'comparison';
-        if (isBar !== wantBar) {
+        const isDoughnut = langChartInstance.config.type === 'doughnut';
+        const wantDoughnut = currentView === 'comparison';
+        if (isDoughnut !== wantDoughnut) {
             langChartInstance.destroy();
             langChartInstance = null;
         }
@@ -152,55 +152,46 @@ function updateLanguagesChart() {
             return { lang, count: langObj ? langObj.count : 0 };
         }).sort((a, b) => b.count - a.count);
 
-        const datasets = sortedLangs.map((item) => {
-            const lang = item.lang;
-            const count = item.count;
-            const langIndex = allLanguagesWithCounts.findIndex(l => l.lang === lang);
-            const color = colors[langIndex % colors.length];
-
-            return {
-                label: lang,
-                data: [count],
-                backgroundColor: color,
-                borderColor: color,
-                borderRadius: 4,
-                barPercentage: 0.8,
-                categoryPercentage: 1.0
-            };
+        const labels = sortedLangs.map(i => i.lang);
+        const dataValues = sortedLangs.map(i => i.count);
+        const bgColors = sortedLangs.map(i => {
+            const idx = allLanguagesWithCounts.findIndex(l => l.lang === i.lang);
+            return colors[idx % colors.length];
         });
 
+        const dataset = {
+            data: dataValues,
+            backgroundColor: bgColors,
+            borderColor: '#ffffff',
+            borderWidth: 2,
+            hoverOffset: 4
+        };
+
         if (langChartInstance) {
-            langChartInstance.data.labels = ['Latest Count'];
-            langChartInstance.data.datasets = datasets;
+            langChartInstance.data.labels = labels;
+            langChartInstance.data.datasets = [dataset];
             langChartInstance.update();
         } else {
             langChartInstance = new Chart(ctx, {
-                type: 'bar',
+                type: 'doughnut',
                 data: {
-                    labels: ['Latest Count'],
-                    datasets: datasets
+                    labels: labels,
+                    datasets: [dataset]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '60%',
                     interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
+                        mode: 'dataset',
                         intersect: false,
                     },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { enabled: false, external: externalTooltip }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: 'rgba(147,155,166,0.06)' },
-                            ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v / 1000) + 'k' : v }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#94a3b8' }
+                        tooltip: { 
+                            enabled: false, 
+                            external: externalTooltip,
+                            callbacks: { title: () => 'Latest Count' }
                         }
                     }
                 }

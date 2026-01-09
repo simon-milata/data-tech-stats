@@ -56,38 +56,48 @@ function updateChart() {
             return { t, val, originalIndex: i };
         }).sort((a, b) => b.val - a.val);
 
-        const datasets = sortedTopics.map((item) => {
-            return {
-                label: toReadableKey(item.t),
-                data: [item.val],
-                backgroundColor: colors[item.originalIndex % colors.length],
-                borderColor: colors[item.originalIndex % colors.length],
-                borderRadius: 4,
-                barPercentage: 0.8,
-                categoryPercentage: 1.0
-            };
-        });
+        const labels = sortedTopics.map(item => toReadableKey(item.t));
+        const dataValues = sortedTopics.map(item => item.val);
+        const bgColors = sortedTopics.map(item => colors[item.originalIndex % colors.length]);
+
+        const dataset = {
+            label: 'Latest Count',
+            data: dataValues,
+            backgroundColor: bgColors,
+            borderColor: bgColors,
+            borderRadius: 4,
+            barPercentage: 0.7,
+            categoryPercentage: 0.8
+        };
 
         if (chart) {
-            chart.data.labels = ['Latest Count'];
-            chart.data.datasets = datasets;
+            chart.data.labels = labels;
+            chart.data.datasets = [dataset];
             chart.update();
         } else {
             chart = new Chart(ctx, {
                 type: 'bar',
-                data: { labels: ['Latest Count'], datasets },
+                data: { labels: labels, datasets: [dataset] },
                 options: {
+                    indexAxis: 'y',
                     responsive: true,
                     maintainAspectRatio: false,
                     interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
+                        mode: 'dataset',
+                        axis: 'y',
                         intersect: false,
                     },
-                    plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        tooltip: { 
+                            enabled: false, 
+                            external: externalTooltip,
+                            callbacks: { title: () => 'Latest Count' }
+                        } 
+                    },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v/1000)+'k' : v } },
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        x: { beginAtZero: true, grid: { color: 'rgba(147,155,166,0.06)' }, ticks: { color: '#94a3b8', callback: v => v >= 1000 ? Math.round(v/1000)+'k' : v } },
+                        y: { grid: { display: false }, ticks: { color: '#94a3b8', autoSkip: false } }
                     }
                 }
             });

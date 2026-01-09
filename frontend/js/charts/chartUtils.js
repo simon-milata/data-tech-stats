@@ -41,6 +41,44 @@ export function renderLegend(chart, container, onToggle) {
     container.innerHTML = '';
     container.removeAttribute('style');
     
+    // Handle Pie/Doughnut/PolarArea or Single-Dataset Bar (Comparison Views)
+    // These charts have 1 dataset but multiple labels/colors we want to toggle.
+    const isPieLike = ['pie', 'doughnut', 'polarArea'].includes(chart.config.type);
+    const isSingleDatasetBreakdown = chart.data.datasets.length === 1 && chart.data.labels.length > 1;
+
+    if (isPieLike || isSingleDatasetBreakdown) {
+        const dataset = chart.data.datasets[0];
+        const labels = chart.data.labels;
+        
+        labels.forEach((label, index) => {
+            if (!label) return;
+
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            
+            // Use getDataVisibility for data points (Chart.js 3+)
+            const isVisible = chart.getDataVisibility(index);
+            chip.className = isVisible ? 'legend-chip active' : 'legend-chip';
+            
+            let color = Array.isArray(dataset.backgroundColor) 
+                ? dataset.backgroundColor[index % dataset.backgroundColor.length] 
+                : dataset.backgroundColor;
+            
+            chip.style.borderLeft = `8px solid ${color}`;
+            chip.textContent = label;
+
+            chip.onclick = () => {
+                chart.toggleDataVisibility(index);
+                const nowVisible = chart.getDataVisibility(index);
+                chip.classList.toggle('active', nowVisible);
+                chart.update();
+                if (onToggle) onToggle(index, nowVisible);
+            };
+            container.appendChild(chip);
+        });
+        return;
+    }
+
     const legendItems = chart.data.datasets.map((dataset, index) => ({
         dataset,
         index
@@ -91,42 +129,69 @@ export function externalTooltip(context) {
         parent.appendChild(tip);
     }
 
+    tip.style.pointerEvents = 'none';
+
     if (tooltip.opacity === 0) {
         tip.style.opacity = 0;
         return;
     }
 
     const title = tooltip.title && tooltip.title.length ? tooltip.title[0] : '';
-    tip.querySelector('.label').textContent = title;
-
+    const labelEl = tip.querySelector('.label');
     const valuesEl = tip.querySelector('.values');
+    
+    const isComparison = chart.config.type === 'doughnut' || chart.config.type === 'pie' || chart.options.indexAxis === 'y';
+
+    labelEl.style.display = 'block';
+    labelEl.textContent = title;
+    valuesEl.style.marginTop = '6px';
+
     valuesEl.innerHTML = '';
 
     if (tooltip.dataPoints && tooltip.dataPoints.length) {
         const sortedPoints = tooltip.dataPoints.slice().sort((a, b) => {
+            if (chart.options.indexAxis === 'y') {
+                return (b.parsed.x || 0) - (a.parsed.x || 0);
+            }
             const valA = a.parsed && (typeof a.parsed.y !== 'undefined') ? a.parsed.y : (a.raw || 0);
             const valB = b.parsed && (typeof b.parsed.y !== 'undefined') ? b.parsed.y : (b.raw || 0);
             return valB - valA;
         });
 
         sortedPoints.forEach(dp => {
-            const name = dp.dataset.label || '';
-            let v = dp.parsed && (typeof dp.parsed.y !== 'undefined') ? dp.parsed.y : (dp.raw || '');
+            let name = dp.dataset.label;
+            if (isComparison) {
+                name = dp.label;
+            }
+            name = name || '';
+            let v;
+            if (chart.options.indexAxis === 'y') {
+                v = dp.parsed.x;
+            } else {
+                v = dp.parsed && (typeof dp.parsed.y !== 'undefined') ? dp.parsed.y : (dp.raw || '');
+            }
             if (dp.dataset.originalData && typeof dp.dataset.originalData[dp.dataIndex] !== 'undefined') {
                 v = dp.dataset.originalData[dp.dataIndex];
             }
-            const color = (dp.dataset && (dp.dataset.borderColor || dp.dataset.backgroundColor)) || '#000';
+            
+            let rawColor = dp.dataset.borderColor;
+            if (isComparison) rawColor = dp.dataset.backgroundColor;
+            if (!rawColor) rawColor = dp.dataset.backgroundColor || dp.dataset.borderColor || '#000';
+            
+            const color = Array.isArray(rawColor) ? rawColor[dp.dataIndex] : rawColor;
+
 
             let formattedValue = Number(v).toLocaleString();
             if (chart.config.options.valueFormatter) {
                 formattedValue = chart.config.options.valueFormatter(v, dp);
             }
 
+            const nameHtml = name ? `<span class="tt-name" style="max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${name}</span>` : '';
             const row = document.createElement('div');
             row.className = 'tt-line';
             row.innerHTML = `
                 <span class="tt-dot" style="background:${color};"></span>
-                <span class="tt-name" style="max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;">${name}</span>
+                ${nameHtml}
                 <span class="tt-val">${formattedValue}</span>
             `;
             valuesEl.appendChild(row);
@@ -230,7 +295,13 @@ export function setupChartInteractions(canvas, getChartInstance) {
         if (rafId) cancelAnimationFrame(rafId);
 
         rafId = requestAnimationFrame(() => {
-            const elements = chart.getElementsAtEventForMode(e, 'index', { intersect: false }, false);
+            const interaction = chart.options.interaction || {};
+            const mode = interaction.mode || 'index';
+            const options = {
+                intersect: interaction.intersect ?? false,
+                axis: interaction.axis || 'x'
+            };
+            const elements = chart.getElementsAtEventForMode(e, mode, options, false);
             const activeElements = chart.tooltip.getActiveElements();
             const hasChanged = elements.length !== activeElements.length ||
                 !elements.every((el, i) => el.datasetIndex === activeElements[i].datasetIndex && el.index === activeElements[i].index);
