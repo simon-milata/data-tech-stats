@@ -149,7 +149,9 @@ export function externalTooltip(context) {
     valuesEl.innerHTML = '';
 
     if (tooltip.dataPoints && tooltip.dataPoints.length) {
-        const sortedPoints = tooltip.dataPoints.slice().sort((a, b) => {
+        const sortedPoints = tooltip.dataPoints.slice()
+            .filter(dp => chart.getDataVisibility(dp.dataIndex) !== false)
+            .sort((a, b) => {
             if (chart.options.indexAxis === 'y') {
                 return (b.parsed.x || 0) - (a.parsed.x || 0);
             }
@@ -318,13 +320,14 @@ export function setupChartInteractions(canvas, getChartInstance) {
                 axis: interaction.axis || 'x'
             };
             const elements = chart.getElementsAtEventForMode(e, mode, options, false);
+            const visibleElements = elements.filter(el => chart.getDataVisibility(el.index) !== false);
             const activeElements = chart.tooltip.getActiveElements();
-            const hasChanged = elements.length !== activeElements.length ||
-                !elements.every((el, i) => el.datasetIndex === activeElements[i].datasetIndex && el.index === activeElements[i].index);
+            const hasChanged = visibleElements.length !== activeElements.length ||
+                !visibleElements.every((el, i) => el.datasetIndex === activeElements[i].datasetIndex && el.index === activeElements[i].index);
 
             if (hasChanged) {
-                chart.setActiveElements(elements);
-                chart.tooltip.setActiveElements(elements);
+                chart.setActiveElements(visibleElements);
+                chart.tooltip.setActiveElements(visibleElements);
                 chart.update();
             }
             rafId = null;

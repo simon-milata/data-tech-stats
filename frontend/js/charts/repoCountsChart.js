@@ -6,6 +6,7 @@ let currentView = 'historical';
 let lastLabels = [];
 let lastSortedData = [];
 let lastTopics = [];
+let hiddenTopics = new Set();
 
 const colors = [
     '#8b5cf6', '#fb923c', '#06b6d4', '#f472b6', '#10b981', '#ef4444', '#60a5fa', '#a78bfa', '#f59e0b', '#34d399', '#c084fc', '#f97316'
@@ -56,9 +57,11 @@ function updateChart() {
             return { t, val, originalIndex: i };
         }).sort((a, b) => b.val - a.val);
 
-        const labels = sortedTopics.map(item => toReadableKey(item.t));
-        const dataValues = sortedTopics.map(item => item.val);
-        const bgColors = sortedTopics.map(item => colors[item.originalIndex % colors.length]);
+        const visibleTopics = sortedTopics.filter(item => !hiddenTopics.has(item.t));
+
+        const labels = visibleTopics.map(item => toReadableKey(item.t));
+        const dataValues = visibleTopics.map(item => item.val);
+        const bgColors = visibleTopics.map(item => colors[item.originalIndex % colors.length]);
 
         const dataset = {
             label: 'Latest Count',
@@ -103,6 +106,25 @@ function updateChart() {
             });
             setupChartInteractions(canvas, () => chart);
         }
+
+        const legendContainer = document.getElementById('repoLegend');
+        if (legendContainer) {
+            legendContainer.innerHTML = '';
+            sortedTopics.forEach(item => {
+                const chip = document.createElement('button');
+                chip.type = 'button';
+                const isVisible = !hiddenTopics.has(item.t);
+                chip.className = isVisible ? 'legend-chip active' : 'legend-chip';
+                chip.style.borderLeft = `8px solid ${colors[item.originalIndex % colors.length]}`;
+                chip.textContent = toReadableKey(item.t);
+                chip.onclick = () => {
+                    if (hiddenTopics.has(item.t)) hiddenTopics.delete(item.t);
+                    else hiddenTopics.add(item.t);
+                    updateChart();
+                };
+                legendContainer.appendChild(chip);
+            });
+        }
     } else {
         const datasets = lastTopics.map((t,i) => ({
             label: toReadableKey(t),
@@ -122,7 +144,8 @@ function updateChart() {
             pointBorderColor: colors[i % colors.length],
             pointBorderWidth: 3.5,
             hitRadius: 8,
-            hoverBorderWidth: 3
+            hoverBorderWidth: 3,
+            hidden: hiddenTopics.has(t)
         }));
 
         if (chart) {
@@ -153,7 +176,13 @@ function updateChart() {
     }
     
     const dropdown = document.getElementById('repoTopicFilters');
-    if (!dropdown) renderLegend(chart, document.getElementById('repoLegend'));
+    if (!dropdown && currentView !== 'comparison') {
+        renderLegend(chart, document.getElementById('repoLegend'), (index, isVisible) => {
+            const topic = lastTopics[index];
+            if (isVisible) hiddenTopics.delete(topic);
+            else hiddenTopics.add(topic);
+        });
+    }
 }
 
 export async function renderRepoCountsChart(selectedTopics = null, onSummary, range = 'weekly') {
@@ -178,6 +207,7 @@ export async function renderRepoCountsChart(selectedTopics = null, onSummary, ra
     lastSortedData = sorted;
     lastLabels = labels;
     lastTopics = topics;
+    hiddenTopics.clear();
 
     setupViewSwitcher();
     updateChart();
