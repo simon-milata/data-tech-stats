@@ -38,13 +38,13 @@
                 <div class="card-top">
                     <h2>Total Repositories by Topic</h2>
                     <div class="controls">
-                        <div id="repoViewSwitcher" class="range-switcher" style="margin-right: 12px;">
-                            <button class="range-btn active" data-view="historical">Historical</button>
-                            <button class="range-btn" data-view="comparison">Comparison</button>
-                        </div>
                         <div class="range-switcher" role="tablist" aria-label="Range selector" style="display: none;">
                             <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
                             <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
+                        </div>
+                        <div id="repoViewSwitcher" class="range-switcher">
+                            <button class="range-btn active" data-view="historical">Historical</button>
+                            <button class="range-btn" data-view="comparison">Comparison</button>
                         </div>
                         <!-- legend will appear below the chart as the single control -->
                     </div>
@@ -58,14 +58,14 @@
                 <div class="card-top">
                     <h2>Main Languages of Repositories</h2>
                     <div class="controls">
-                        <div id="languagesViewSwitcher" class="range-switcher" style="margin-right: 12px;">
-                            <button class="range-btn active" data-view="historical">Historical</button>
-                            <button class="range-btn" data-view="comparison">Comparison</button>
-                        </div>
                         <div id="languageSelectorContainer"></div>
                         <div class="range-switcher" role="tablist" aria-label="Range selector" style="display: none;">
                             <button class="range-btn active" data-range="weekly" role="tab" aria-selected="true">Weekly</button>
                             <button class="range-btn" data-range="monthly" role="tab" aria-selected="false">Monthly</button>
+                        </div>
+                        <div id="languagesViewSwitcher" class="range-switcher">
+                            <button class="range-btn active" data-view="historical">Historical</button>
+                            <button class="range-btn" data-view="comparison">Comparison</button>
                         </div>
                     </div>
                 </div>
@@ -80,10 +80,6 @@
                 <div class="card-top">
                     <h2>Repository Comparison</h2>
                     <div class="controls">
-                        <div class="range-switcher" id="compViewSwitcher" style="margin-right: 12px;">
-                            <button class="range-btn active" data-view="historical">Historical</button>
-                            <button class="range-btn" data-view="comparison">Comparison</button>
-                        </div>
                         <div class="metric-switcher range-switcher" id="metricSwitcher">
                             <button class="metric-btn range-btn active" data-metric="stars">Stars</button>
                             <button class="metric-btn range-btn" data-metric="size">Size</button>
@@ -93,6 +89,10 @@
                         <div class="range-switcher" id="compRangeSwitcher" style="display: none;">
                             <button class="range-btn active" data-range="weekly">Weekly</button>
                             <button class="range-btn" data-range="monthly">Monthly</button>
+                        </div>
+                        <div class="range-switcher" id="compViewSwitcher">
+                            <button class="range-btn active" data-view="historical">Historical</button>
+                            <button class="range-btn" data-view="comparison">Comparison</button>
                         </div>
                     </div>
                 </div>
