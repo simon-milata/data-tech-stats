@@ -147,14 +147,20 @@ function updateLanguagesChart() {
     const selectedLangs = getSelectedLanguages();
 
     if (currentView === 'comparison') {
-        const sortedLangs = selectedLangs.map(lang => {
-            const langObj = allLanguagesWithCounts.find(l => l.lang === lang);
-            return { lang, count: langObj ? langObj.count : 0 };
-        }).sort((a, b) => b.count - a.count);
+        const selectedSet = new Set(selectedLangs);
+        const displayedLangs = allLanguagesWithCounts.filter(l => selectedSet.has(l.lang));
+        const otherLangs = allLanguagesWithCounts.filter(l => !selectedSet.has(l.lang));
+        const otherCount = otherLangs.reduce((acc, curr) => acc + curr.count, 0);
 
-        const labels = sortedLangs.map(i => i.lang);
-        const dataValues = sortedLangs.map(i => i.count);
-        const bgColors = sortedLangs.map(i => {
+        const chartData = displayedLangs.map(l => ({ lang: l.lang, count: l.count }));
+        if (otherCount > 0) {
+            chartData.push({ lang: 'Other', count: otherCount });
+        }
+
+        const labels = chartData.map(i => i.lang);
+        const dataValues = chartData.map(i => i.count);
+        const bgColors = chartData.map(i => {
+            if (i.lang === 'Other') return '#cbd5e1';
             const idx = allLanguagesWithCounts.findIndex(l => l.lang === i.lang);
             return colors[idx % colors.length];
         });
