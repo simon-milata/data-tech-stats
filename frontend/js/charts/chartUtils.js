@@ -226,12 +226,8 @@ export function externalTooltip(context) {
     let tooltipX, tooltipY;
 
     if (isComparison) {
-        // Quadrant logic: place tooltip in the opposite vertical and horizontal half
-        if (caretX > canvasRect.width / 2) {
-            tooltipX = PADDING; // Left
-        } else {
-            tooltipX = parentRect.width - tipWidth - PADDING; // Right
-        }
+        // Always place tooltip on the right side
+        tooltipX = parentRect.width - tipWidth - PADDING;
 
         if (caretY > canvasRect.height / 2) {
             tooltipY = PADDING; // Top
