@@ -221,25 +221,41 @@ export function externalTooltip(context) {
     const PADDING = 8; // Padding from the container edges
     const PADDING_BOTTOM = 35; // Extra padding at bottom to avoid X-axis labels
 
-    // --- Y POSITIONING ---
-    // Default position is above the caret
-    let tooltipY = top - tipHeight - Y_OFFSET_ABOVE;
+    let tooltipX, tooltipY;
 
-    // If it goes off the top, place it below the caret instead
-    if (tooltipY < PADDING) {
-        tooltipY = top + Y_OFFSET_BELOW;
-    }
+    if (isComparison) {
+        // Quadrant logic: place tooltip in the opposite vertical and horizontal half
+        if (caretX > canvasRect.width / 2) {
+            tooltipX = PADDING; // Left
+        } else {
+            tooltipX = parentRect.width - tipWidth - PADDING; // Right
+        }
 
-    // --- X POSITIONING ---
-    // Always place to the side to avoid covering points
-    const X_OFFSET = 20;
-    const spaceRight = parentRect.width - left;
-    let tooltipX;
-    
-    if (spaceRight > tipWidth + X_OFFSET) {
-        tooltipX = left + X_OFFSET;
+        if (caretY > canvasRect.height / 2) {
+            tooltipY = PADDING; // Top
+        } else {
+            tooltipY = parentRect.height - tipHeight - PADDING; // Bottom
+        }
     } else {
-        tooltipX = left - tipWidth - X_OFFSET;
+        // --- Y POSITIONING ---
+        // Default position is above the caret
+        tooltipY = top - tipHeight - Y_OFFSET_ABOVE;
+
+        // If it goes off the top, place it below the caret instead
+        if (tooltipY < PADDING) {
+            tooltipY = top + Y_OFFSET_BELOW;
+        }
+
+        // --- X POSITIONING ---
+        // Always place to the side to avoid covering points
+        const X_OFFSET = 20;
+        const spaceRight = parentRect.width - left;
+        
+        if (spaceRight > tipWidth + X_OFFSET) {
+            tooltipX = left + X_OFFSET;
+        } else {
+            tooltipX = left - tipWidth - X_OFFSET;
+        }
     }
 
     // --- CLAMPING to parent container ---
