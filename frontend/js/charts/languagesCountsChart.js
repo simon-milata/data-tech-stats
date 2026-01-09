@@ -188,6 +188,11 @@ function updateLanguagesChart() {
                     responsive: true,
                     maintainAspectRatio: false,
                     cutout: '60%',
+                    valueFormatter: (val, ctx) => {
+                        const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                        const pct = ((val / total) * 100).toFixed(1) + '%';
+                        return `${Number(val).toLocaleString()} <span style="color: #94a3b8; font-weight: 500; font-size: 0.85em; margin-left: 6px;">(${pct})</span>`;
+                    },
                     interaction: {
                         mode: 'dataset',
                         intersect: false,
