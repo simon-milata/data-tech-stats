@@ -2,7 +2,7 @@ import { getRepoCountsByTopic } from '../api.js';
 import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate, setupChartInteractions } from './chartUtils.js';
 
 let chart = null;
-let currentView = 'historical';
+let currentView = 'comparison';
 let lastLabels = [];
 let lastSortedData = [];
 let lastTopics = [];

@@ -5,7 +5,7 @@ let langChartInstance = null;
 let allLanguagesWithCounts = [];
 let rawLanguageData = {};
 let isInitializing = false;
-let currentView = 'historical';
+let currentView = 'comparison';
 let globalLabels = [];
 
 const colors = [
