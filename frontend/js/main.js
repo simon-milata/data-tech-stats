@@ -1,5 +1,6 @@
 import { renderRepoCountsChart } from './charts/repoCountsChart.js';
 import { renderLanguagesCountsChart } from './charts/languagesCountsChart.js';
+import { toggleLoading } from './charts/chartUtils.js';
 
 const CHART_TYPES = {
     REPOS: 'repos',
@@ -58,8 +59,14 @@ const initCharts = async () => {
             const comparisonCard = document.querySelector('.graph-card[data-chart-type="comparison"]');
             
             const loadComparison = async () => {
-                const { initRepoComparisonChart } = await import('./charts/repoComparisonChart.js');
-                initRepoComparisonChart();
+                toggleLoading('repoComparisonChart', true);
+                try {
+                    const { initRepoComparisonChart } = await import('./charts/repoComparisonChart.js');
+                    initRepoComparisonChart();
+                } catch (e) {
+                    console.error('Failed to load comparison chart:', e);
+                    toggleLoading('repoComparisonChart', false);
+                }
             };
 
             if (comparisonCard && 'IntersectionObserver' in window) {

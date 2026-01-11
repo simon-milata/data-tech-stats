@@ -1,5 +1,5 @@
 import { getRepoList, getRepoComparison } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher, toggleLoading } from './chartUtils.js';
 
 const MAX_SELECTION = 5;
 const COLORS = [
@@ -30,6 +30,7 @@ const repoComparisonLegend = document.getElementById('repoComparisonLegend');
 export async function initRepoComparisonChart() {
     if (!ctx) return; // Guard in case element is missing
 
+    toggleLoading('repoComparisonChart', true);
     try {
         const repos = await getRepoList();
         // Sort repos by stars (descending)
@@ -64,6 +65,8 @@ export async function initRepoComparisonChart() {
         
     } catch (err) {
         console.error('Failed to initialize comparison chart:', err);
+    } finally {
+        toggleLoading('repoComparisonChart', false);
     }
 }
 
@@ -267,15 +270,18 @@ async function updateChart() {
     }
 
     const reposArray = Array.from(selectedRepos);
+    toggleLoading('repoComparisonChart', true);
     let data;
     try {
         data = await getRepoComparison(currentRange);
     } catch (error) {
         console.error("Failed to fetch repo comparison data:", error);
+        if (updateId === latestUpdateId) toggleLoading('repoComparisonChart', false);
         return;
     }
     
     if (updateId !== latestUpdateId) return;
+    toggleLoading('repoComparisonChart', false);
 
     if (!data || Object.keys(data).length === 0) return;
 

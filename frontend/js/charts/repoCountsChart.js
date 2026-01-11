@@ -1,5 +1,5 @@
 import { getRepoCountsByTopic } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher, toggleLoading } from './chartUtils.js';
 
 let chart = null;
 let currentView = 'comparison';
@@ -169,40 +169,47 @@ function updateChart() {
 
 export async function renderRepoCountsChart(selectedTopics = null, onSummary, range = currentRange) {
     currentRange = range;
-    const raw = await getRepoCountsByTopic(range);
-    if (!raw || raw.length === 0) return;
+    toggleLoading('repoCountsChart', true);
+    try {
+        const raw = await getRepoCountsByTopic(range);
+        if (!raw || raw.length === 0) return;
 
-    // normalize: each entry may be {date, counts:{...}} or {date, topic1:.., topic2:..}
-    // sort ascending by week start date
-    const sorted = raw.slice().sort((a,b)=> isoWeekToDate(a.date) - isoWeekToDate(b.date));
+        // normalize: each entry may be {date, counts:{...}} or {date, topic1:.., topic2:..}
+        // sort ascending by week start date
+        const sorted = raw.slice().sort((a,b)=> isoWeekToDate(a.date) - isoWeekToDate(b.date));
 
-    const labels = sorted.map(d => formatWeekLabel(d.date, range));
-    const sample = sorted[0];
-    const countsObj = sample.counts || (() => {
-        // build counts-like object from top-level keys excluding date
-        const o = {};
-        Object.keys(sample).forEach(k => { if (k !== 'date') o[k] = sample[k]; });
-        return o;
-    })();
-    const allKeys = Object.keys(countsObj);
-    const topics = selectedTopics && selectedTopics.length ? selectedTopics : allKeys;
+        const labels = sorted.map(d => formatWeekLabel(d.date, range));
+        const sample = sorted[0];
+        const countsObj = sample.counts || (() => {
+            // build counts-like object from top-level keys excluding date
+            const o = {};
+            Object.keys(sample).forEach(k => { if (k !== 'date') o[k] = sample[k]; });
+            return o;
+        })();
+        const allKeys = Object.keys(countsObj);
+        const topics = selectedTopics && selectedTopics.length ? selectedTopics : allKeys;
 
-    lastSortedData = sorted;
-    lastLabels = labels;
-    lastTopics = topics;
-    hiddenTopics.clear();
+        lastSortedData = sorted;
+        lastLabels = labels;
+        lastTopics = topics;
+        hiddenTopics.clear();
 
-    setupViewSwitcher('repoViewSwitcher', currentView, (newView) => {
-        currentView = newView;
+        setupViewSwitcher('repoViewSwitcher', currentView, (newView) => {
+            currentView = newView;
+            updateChart();
+        });
+        const rangeSwitcher = document.querySelector('.graph-card[data-chart-type="repos"] .range-switcher[role="tablist"]');
+        setupRangeSwitcher(rangeSwitcher, (newRange) => {
+            renderRepoCountsChart(lastTopics, null, newRange);
+        });
         updateChart();
-    });
-    const rangeSwitcher = document.querySelector('.graph-card[data-chart-type="repos"] .range-switcher[role="tablist"]');
-    setupRangeSwitcher(rangeSwitcher, (newRange) => {
-        renderRepoCountsChart(lastTopics, null, newRange);
-    });
-    updateChart();
-    
-    if (typeof onSummary === 'function') onSummary(computeSummary(sorted, topics));
+        
+        if (typeof onSummary === 'function') onSummary(computeSummary(sorted, topics));
+    } catch (e) {
+        console.error('Error rendering repo counts chart:', e);
+    } finally {
+        toggleLoading('repoCountsChart', false);
+    }
 }
 
 function computeSummary(sortedData, topics){

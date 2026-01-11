@@ -1,5 +1,5 @@
 import { getLanguagesTimeseries } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher, toggleLoading } from './chartUtils.js';
 
 let langChartInstance = null;
 let allLanguagesWithCounts = [];
@@ -249,35 +249,42 @@ function updateLanguagesChart() {
 
 export async function renderLanguagesCountsChart(range = currentRange) {
     currentRange = range;
-    const data = await getLanguagesTimeseries(range);
-    if (!data || !data.length) return;
+    toggleLoading('languagesCountsChart', true);
+    try {
+        const data = await getLanguagesTimeseries(range);
+        if (!data || !data.length) return;
 
-    globalLabels = data.map(d => formatWeekLabel(d.date, range));
-    const sample = data[data.length - 1];
-    const countsObj = sample.counts || {};
-    const allLanguages = Object.keys(countsObj);
+        globalLabels = data.map(d => formatWeekLabel(d.date, range));
+        const sample = data[data.length - 1];
+        const countsObj = sample.counts || {};
+        const allLanguages = Object.keys(countsObj);
 
-    rawLanguageData = {};
-    allLanguages.forEach(lang => {
-        rawLanguageData[lang] = data.map(d => {
-            const counts = d.counts || {};
-            return Number(counts[lang] || 0);
+        rawLanguageData = {};
+        allLanguages.forEach(lang => {
+            rawLanguageData[lang] = data.map(d => {
+                const counts = d.counts || {};
+                return Number(counts[lang] || 0);
+            });
         });
-    });
 
-    allLanguagesWithCounts = allLanguages.map(lang => ({
-        lang,
-        count: countsObj[lang] || 0
-    })).sort((a, b) => (b.count - a.count));
+        allLanguagesWithCounts = allLanguages.map(lang => ({
+            lang,
+            count: countsObj[lang] || 0
+        })).sort((a, b) => (b.count - a.count));
 
-    renderSelector();
-    setupViewSwitcher('languagesViewSwitcher', currentView, (newView) => {
-        currentView = newView;
+        renderSelector();
+        setupViewSwitcher('languagesViewSwitcher', currentView, (newView) => {
+            currentView = newView;
+            updateLanguagesChart();
+        });
+        const rangeSwitcher = document.querySelector('.graph-card[data-chart-type="languages"] .range-switcher[role="tablist"]');
+        setupRangeSwitcher(rangeSwitcher, (newRange) => {
+            renderLanguagesCountsChart(newRange);
+        });
         updateLanguagesChart();
-    });
-    const rangeSwitcher = document.querySelector('.graph-card[data-chart-type="languages"] .range-switcher[role="tablist"]');
-    setupRangeSwitcher(rangeSwitcher, (newRange) => {
-        renderLanguagesCountsChart(newRange);
-    });
-    updateLanguagesChart();
+    } catch (e) {
+        console.error('Error rendering languages chart:', e);
+    } finally {
+        toggleLoading('languagesCountsChart', false);
+    }
 }

@@ -444,3 +444,14 @@ export function setupRangeSwitcher(container, onSwitch) {
         }
     });
 }
+
+export function toggleLoading(canvasId, isLoading) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const wrapper = canvas.parentElement;
+    const loader = wrapper.querySelector('.loading-overlay');
+    if (loader) {
+        if (isLoading) loader.classList.add('visible');
+        else loader.classList.remove('visible');
+    }
+}
