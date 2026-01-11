@@ -1,8 +1,9 @@
 import { getRepoCountsByTopic } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate, setupChartInteractions } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, isoWeekToDate, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher } from './chartUtils.js';
 
 let chart = null;
 let currentView = 'comparison';
+let currentRange = 'weekly';
 let lastLabels = [];
 let lastSortedData = [];
 let lastTopics = [];
@@ -13,25 +14,6 @@ const colors = [
 ];
 
 function toReadableKey(k){ return k.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
-
-function setupViewSwitcher() {
-    const switcher = document.getElementById('repoViewSwitcher');
-    if (!switcher) return;
-    if (switcher.dataset.listenerAttached) return;
-    switcher.dataset.listenerAttached = 'true';
-
-    switcher.addEventListener('click', (e) => {
-        if (e.target.classList.contains('range-btn')) {
-            switcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            const newView = e.target.dataset.view;
-            if (currentView !== newView) {
-                currentView = newView;
-                updateChart();
-            }
-        }
-    });
-}
 
 function updateChart() {
     const canvas = document.getElementById('repoCountsChart');
@@ -185,7 +167,8 @@ function updateChart() {
     }
 }
 
-export async function renderRepoCountsChart(selectedTopics = null, onSummary, range = 'weekly') {
+export async function renderRepoCountsChart(selectedTopics = null, onSummary, range = currentRange) {
+    currentRange = range;
     const raw = await getRepoCountsByTopic(range);
     if (!raw || raw.length === 0) return;
 
@@ -209,7 +192,14 @@ export async function renderRepoCountsChart(selectedTopics = null, onSummary, ra
     lastTopics = topics;
     hiddenTopics.clear();
 
-    setupViewSwitcher();
+    setupViewSwitcher('repoViewSwitcher', currentView, (newView) => {
+        currentView = newView;
+        updateChart();
+    });
+    const rangeSwitcher = document.querySelector('.graph-card[data-chart-type="repos"] .range-switcher[role="tablist"]');
+    setupRangeSwitcher(rangeSwitcher, (newRange) => {
+        renderRepoCountsChart(lastTopics, null, newRange);
+    });
     updateChart();
     
     if (typeof onSummary === 'function') onSummary(computeSummary(sorted, topics));

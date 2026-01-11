@@ -1,5 +1,5 @@
 import { getRepoList, getRepoComparison } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher } from './chartUtils.js';
 
 const MAX_SELECTION = 5;
 const COLORS = [
@@ -24,7 +24,6 @@ const repoListContainer = document.getElementById('repoListContainer');
 const repoSearch = document.getElementById('repoSearch');
 const metricSwitcher = document.getElementById('metricSwitcher');
 const repoComparisonViewSwitcher = document.getElementById('compViewSwitcher');
-const repoComparisonRangeSwitcher = document.getElementById('compRangeSwitcher');
 const ctx = document.getElementById('repoComparisonChart') ? document.getElementById('repoComparisonChart').getContext('2d') : null;
 const repoComparisonLegend = document.getElementById('repoComparisonLegend');
 
@@ -50,8 +49,15 @@ export async function initRepoComparisonChart() {
         // Setup event listeners
         setupSearch();
         setupMetricSwitcher();
-        setupRangeSwitcher();
-        setupViewSwitcher();
+        setupRangeSwitcher('compRangeSwitcher', (newRange) => {
+            currentRange = newRange;
+            updateChart();
+        });
+        setupViewSwitcher('compViewSwitcher', currentView, (newView) => {
+            currentView = newView;
+            updateControlsVisibility();
+            updateChart();
+        });
         setupChartInteractions(ctx.canvas, () => chart);
         
         renderUI();
@@ -231,35 +237,6 @@ function setupMetricSwitcher() {
             e.target.classList.add('active');
             currentMetric = e.target.dataset.metric;
             updateChart();
-        }
-    });
-}
-
-function setupRangeSwitcher() {
-    if (!repoComparisonRangeSwitcher) return;
-    repoComparisonRangeSwitcher.addEventListener('click', (e) => {
-        if (e.target.classList.contains('range-btn')) {
-            repoComparisonRangeSwitcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            currentRange = e.target.dataset.range;
-            getRepoComparison(currentRange);
-            updateChart();
-        }
-    });
-}
-
-function setupViewSwitcher() {
-    if (!repoComparisonViewSwitcher) return;
-    repoComparisonViewSwitcher.addEventListener('click', (e) => {
-        if (e.target.classList.contains('range-btn')) {
-            repoComparisonViewSwitcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            const newView = e.target.dataset.view;
-            if (currentView !== newView) {
-                currentView = newView;
-                updateControlsVisibility();
-                updateChart();
-            }
         }
     });
 }

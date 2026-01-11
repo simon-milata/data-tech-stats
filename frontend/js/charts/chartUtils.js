@@ -375,3 +375,72 @@ export function setupChartInteractions(canvas, getChartInstance) {
         clearTooltip();
     });
 }
+
+export function setupViewSwitcher(containerId, currentView, onSwitch) {
+    const switcher = document.getElementById(containerId);
+    if (!switcher) return;
+
+    // Ensure the correct button is active based on currentView
+    const buttons = switcher.querySelectorAll('.range-btn');
+    buttons.forEach(btn => {
+        if (btn.dataset.view === currentView) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // Store the callback on the element so the listener always uses the latest version
+    switcher._onSwitch = onSwitch;
+
+    if (switcher.dataset.listenerAttached) return;
+    switcher.dataset.listenerAttached = 'true';
+
+    switcher.addEventListener('click', (e) => {
+        if (e.target.classList.contains('range-btn')) {
+            const btn = e.target;
+            if (btn.classList.contains('active')) return;
+            const newView = btn.dataset.view;
+            if (newView) {
+                // Query buttons dynamically to ensure we handle current DOM state
+                const currentButtons = switcher.querySelectorAll('.range-btn');
+                currentButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                if (switcher._onSwitch) {
+                    switcher._onSwitch(newView);
+                }
+            }
+        }
+    });
+}
+
+export function setupRangeSwitcher(container, onSwitch) {
+    if (typeof container === 'string') {
+        container = document.getElementById(container);
+    }
+    if (!container) return;
+
+    // Store callback
+    container._onSwitch = onSwitch;
+
+    if (container.dataset.listenerAttached) return;
+    container.dataset.listenerAttached = 'true';
+
+    container.addEventListener('click', (e) => {
+        if (e.target.classList.contains('range-btn')) {
+            const btn = e.target;
+            if (btn.classList.contains('active')) return;
+            
+            const newRange = btn.dataset.range;
+            if (newRange) {
+                const buttons = container.querySelectorAll('.range-btn');
+                buttons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                if (container._onSwitch) {
+                    container._onSwitch(newRange);
+                }
+            }
+        }
+    });
+}

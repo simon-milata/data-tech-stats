@@ -1,11 +1,12 @@
 import { getLanguagesTimeseries } from '../api.js';
-import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions } from './chartUtils.js';
+import { formatWeekLabel, renderLegend, externalTooltip, setupChartInteractions, setupViewSwitcher, setupRangeSwitcher } from './chartUtils.js';
 
 let langChartInstance = null;
 let allLanguagesWithCounts = [];
 let rawLanguageData = {};
 let isInitializing = false;
 let currentView = 'comparison';
+let currentRange = 'weekly';
 let globalLabels = [];
 
 const colors = [
@@ -109,25 +110,6 @@ function updateLimitMessage(popup) {
     if (limitMsg) {
         limitMsg.classList.toggle('show-warning', count >= 10);
     }
-}
-
-function setupViewSwitcher() {
-    const switcher = document.getElementById('languagesViewSwitcher');
-    if (!switcher) return;
-    if (switcher.dataset.listenerAttached) return;
-    switcher.dataset.listenerAttached = 'true';
-
-    switcher.addEventListener('click', (e) => {
-        if (e.target.classList.contains('range-btn')) {
-            switcher.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
-            e.target.classList.add('active');
-            const newView = e.target.dataset.view;
-            if (currentView !== newView) {
-                currentView = newView;
-                updateLanguagesChart();
-            }
-        }
-    });
 }
 
 function updateLanguagesChart() {
@@ -265,7 +247,8 @@ function updateLanguagesChart() {
     renderLegend(langChartInstance, document.getElementById('languagesLegend'));
 }
 
-export async function renderLanguagesCountsChart(range = 'weekly') {
+export async function renderLanguagesCountsChart(range = currentRange) {
+    currentRange = range;
     const data = await getLanguagesTimeseries(range);
     if (!data || !data.length) return;
 
@@ -288,6 +271,13 @@ export async function renderLanguagesCountsChart(range = 'weekly') {
     })).sort((a, b) => (b.count - a.count));
 
     renderSelector();
-    setupViewSwitcher();
+    setupViewSwitcher('languagesViewSwitcher', currentView, (newView) => {
+        currentView = newView;
+        updateLanguagesChart();
+    });
+    const rangeSwitcher = document.querySelector('.graph-card[data-chart-type="languages"] .range-switcher[role="tablist"]');
+    setupRangeSwitcher(rangeSwitcher, (newRange) => {
+        renderLanguagesCountsChart(newRange);
+    });
     updateLanguagesChart();
 }
