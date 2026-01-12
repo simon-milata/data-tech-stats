@@ -2,7 +2,7 @@
 
 **Live Demo:** https://dts.simonmilata.com/
 
-A serverless system that collects, aggregates, and visualizes historical GitHub statistics for data-related repositories.
+A serverless app that collects, aggregates, and visualizes historical GitHub statistics for data-related repositories.
 The project focuses on end-to-end API design, serverless architecture, and cost-constrained cloud deployment.
 
 ## Project goals
@@ -74,5 +74,5 @@ The project focuses on end-to-end API design, serverless architecture, and cost-
 - Data collection began on deployment; historical trends are built moving forward.
 
 ## Frontend
-This is a backend-centric project. The UI was developed using AI assistance for speed and layout, allowing me to focus on the serverless architecture, data pipeline efficiency, and S3-based analytical storage.
+This is a backend-centric project. I used AI to build the UI so I could focus entirely on the data engineering, serverless architecture, and API logic.
 
