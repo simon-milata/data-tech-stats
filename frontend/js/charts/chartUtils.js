@@ -45,8 +45,17 @@ export function renderLegend(chart, container, onToggle) {
     // These charts have 1 dataset but multiple labels/colors we want to toggle.
     const isPieLike = ['pie', 'doughnut', 'polarArea'].includes(chart.config.type);
     const isSingleDatasetBreakdown = chart.data.datasets.length === 1 && chart.data.labels.length > 1;
-
-    if (isPieLike || isSingleDatasetBreakdown) {
+    
+    // Skip legend for bar charts entirely (comparison view doesn't need it)
+    if (chart.config.type === 'bar') {
+        return;
+    }
+    
+    // For single-dataset line charts, skip the breakdown rendering and go to multi-dataset rendering
+    // This will show just the repo name, not all the dates
+    if (chart.config.type === 'line' && isSingleDatasetBreakdown) {
+        // Fall through to multi-dataset rendering below
+    } else if (isPieLike || isSingleDatasetBreakdown) {
         const dataset = chart.data.datasets[0];
         const labels = chart.data.labels;
         
