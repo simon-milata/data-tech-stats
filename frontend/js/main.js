@@ -1,6 +1,7 @@
 import { renderRepoCountsChart } from './charts/repoCountsChart.js';
 import { renderLanguagesCountsChart } from './charts/languagesCountsChart.js';
 import { toggleLoading } from './charts/chartUtils.js';
+import { isCacheExpired, clearExpiredCache, setCacheTimestamp } from './cacheUtils.js';
 
 const CHART_TYPES = {
     REPOS: 'repos',
@@ -16,6 +17,12 @@ const ranges = {
 
 const initCharts = async () => {
     try {
+        // Check and clear expired cache
+        if (isCacheExpired()) {
+            clearExpiredCache();
+            setCacheTimestamp();
+        }
+
         renderRepoCountsChart(null, null, ranges[CHART_TYPES.REPOS]);
         
         // Yield to main thread to break up long tasks

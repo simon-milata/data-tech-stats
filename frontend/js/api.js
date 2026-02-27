@@ -1,3 +1,5 @@
+import { setCacheData, getCacheData } from './cacheUtils.js';
+
 const API_BASE = (typeof window !== 'undefined' && window.env && window.env.API_BASE);
 
 const comparisonCache = {};
@@ -23,15 +25,14 @@ function getLastMidnightUTC1() {
 
 async function fetchWithCache(url, key) {
     const now = new Date().getTime();
-    const cached = localStorage.getItem(key);
+    const cached = getCacheData(key);
     const lastMidnight = getLastMidnightUTC1();
 
     if (cached) {
-        const { timestamp, data } = JSON.parse(cached);
+        const timestamp = cached.timestamp;
         if (timestamp > lastMidnight) {
-            return data;
+            return cached.data;
         }
-        localStorage.removeItem(key);
     }
 
     if (!API_BASE) return [];
@@ -39,7 +40,8 @@ async function fetchWithCache(url, key) {
         const res = await fetch(url);
         if (!res.ok) throw new Error('Network response was not ok');
         const data = await res.json();
-        localStorage.setItem(key, JSON.stringify({ timestamp: now, data }));
+        const cacheObj = { timestamp: now, data };
+        setCacheData(key, cacheObj);
         return data;
     } catch (err) {
         console.warn('API fetch failed:', err);
