@@ -26,43 +26,43 @@ The project focuses on end-to-end API design, serverless architecture, and cost-
 
 ### API architecture
 
-(Client → Cloudflare DNS → CloudFront → API Gateway → Lambda → S3)
+(Client → Cloudflare → API Gateway → Lambda → S3)
 
-![dts-api drawio](https://github.com/user-attachments/assets/3a771662-f82c-4759-9bab-6c008207a098)
+![dts-api drawio](https://github.com/user-attachments/assets/cf52ca14-c760-4436-8bcf-1a519d0a94d0)
 
-- FastAPI runs inside Lambda using Mangum
+- Cloudflare handles DNS, SSL termination, and basic protection
 - API Gateway routes requests to API Lambda
+- FastAPI runs inside Lambda using Mangum
 - API Lambda reads pre-aggregated data from S3
-- CloudFront caches responses to reduce latency and API calls
 
 ### Architecture Reasoning
 - **Serverless (Lambda + API Gateway):** Chosen for scale-to-zero capabilities. With only tens of daily invocations, a dedicated server would sit 99% idle; Lambda incurs zero cost when inactive.
 - **S3 as Data Store:** The "Write-Once-Read-Many" pattern makes S3 significantly cheaper ($0.023/GB) than maintaining a database.
-- **CloudFront:** Caching responses at the edge reduces Lambda invocations and utilizes the Always Free 1TB transfer allowance, avoiding S3 data transfer fees.
-- **Cloudflare DNS:** Used strictly to avoid the AWS Route 53 hosted zone fee ($0.50/mo), keeping fixed recurring costs at exactly $0.00.
+- **Cloudflare:** Acts as the entry point for DNS, SSL, and basic bot protection. This allows the project to bypass AWS Route 53 hosted zone fees ($0.50/mo).
 
 ## Cost Model & Predictions
 
 - **Compute (Lambda):** Monthly usage is ~8,610 GB-s, which is <3% of the 400,000 GB-s free monthly allowance.
-- **Storage (S3):** Accumulating ~1MB/day (raw snapshots + aggregates). Even as the dataset grows, the storage cost is estimated at <$0.02/month for the first few years.
-- **Networking (CloudFront):** Utilizing the free 1TB per month data transfer allowance.
+- **Storage (S3):** Accumulating ~1MB/day (raw snapshots + aggregates). Even as the dataset grows, the storage cost is estimated at a few cents for the first few years.
 - **API Gateway:** At current volumes (~1,800 requests/month), the cost is estimated at <$0.002/month.
-- **DNS:** Cloudflare. Used to bypass AWS Route 53 hosted zone fees ($0.50/mo), ensuring a total recurring cost of exactly $0.00.
+- **Cloudflare:** Using the Free Tier for DNS and SSL termination to maintain a total recurring cost of exactly $0.00.
+
+While S3 storage and API calls technically accrue a few cents as the dataset grows, AWS typically waives these, resulting in a net cost of $0.00.
 
 ## Tech stack
-**Languages & Frameworks**
+**Backend & API**
 
-<img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" />  <img src="https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi&logoColor=white" />  <img src="https://img.shields.io/badge/Pydantic-E92063?style=flat-square&logo=pydantic&logoColor=white" />  <img src="https://img.shields.io/badge/Pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white" />
+<img src="https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white" /> <img src="https://img.shields.io/badge/FastAPI-005571?style=flat-square&logo=fastapi&logoColor=white" /> <img src="https://img.shields.io/badge/Pydantic-E92063?style=flat-square&logo=pydantic&logoColor=white" /> <img src="https://img.shields.io/badge/Pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white" />
 
 **Data Engineering**
 
-<img src="https://img.shields.io/badge/Boto3-FF9900?style=flat-square&logo=amazonaws&logoColor=white" />  <img src="https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white" />  <img src="https://img.shields.io/badge/PyArrow-D55E5D?style=flat-square" />  <img src="https://img.shields.io/badge/Parquet-000000?style=flat-square" />
+<img src="https://img.shields.io/badge/Boto3-FF9900?style=flat-square&logo=amazonaws&logoColor=white" /> <img src="https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white" /> <img src="https://img.shields.io/badge/PyArrow-D55E5D?style=flat-square" /> <img src="https://img.shields.io/badge/Parquet-000000?style=flat-square&logo=apache-parquet&logoColor=white" />
 
 **AWS Infrastructure**
 
-<img src="https://img.shields.io/badge/Lambda-FF9900?style=flat-square" />  <img src="https://img.shields.io/badge/S3-569A31?style=flat-square" />  <img src="https://img.shields.io/badge/API_Gateway-8C4FFF?style=flat-square" />  <img src="https://img.shields.io/badge/CloudFront-232F3E?style=flat-square" />  <img src="https://img.shields.io/badge/EventBridge-FF4F8B?style=flat-square" />
+<img src="https://img.shields.io/badge/Lambda-FF9900?style=flat-square" /> <img src="https://img.shields.io/badge/S3-569A31?style=flat-square" />  <img src="https://img.shields.io/badge/API_Gateway-8C4FFF?style=flat-square" /> <img src="https://img.shields.io/badge/EventBridge-FF4F8B?style=flat-square" />
 
-**DNS** 
+**Edge & DNS** 
 
 <img src="https://img.shields.io/badge/Cloudflare-F38020?style=flat-square&logo=cloudflare&logoColor=white" />
 
@@ -75,4 +75,5 @@ The project focuses on end-to-end API design, serverless architecture, and cost-
 
 ## Frontend
 This is a backend-centric project. I used AI to build the UI so I could focus entirely on the data engineering, serverless architecture, and API logic.
+
 
